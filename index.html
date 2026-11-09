@@ -6,7 +6,7 @@
 <title>Palais Brongniart · 200 ans</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600&family=Archivo:wght@300;400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&family=Overpass+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root { --blue: #1f3fff; --ink: #111; --mute: #8a8a8a; --line: #e6e6e6; }
   * { box-sizing: border-box; }
@@ -98,27 +98,22 @@
   #tri span { padding: 0 8px; color: #555; white-space: nowrap; }
   body.show #tri { display: none; }
 
-  /* --- typographie : Akzidenz-Grotesk installée sur ce Mac, Archivo en secours ailleurs --- */
-  @font-face { font-family: AGC; src: local('AkzidenzGroteskBQ-Condensed'); }
-  @font-face { font-family: AGLC; src: local('AkzidenzGroteskBQ-LightCond'); }
-  @font-face { font-family: AGR; src: local('AkzidenzGrotesk-Roman'); }
-  @font-face { font-family: AGR; font-weight: 700; src: local('AkzidenzGrotesk-Bold'); }
-  @font-face { font-family: AGL; src: local('AkzidenzGrotesk-Light'); }
-  :root { --cond: AGC, 'Archivo Narrow', 'Arial Narrow', sans-serif; --lab: AGLC, 'Archivo Narrow', 'Arial Narrow', sans-serif; --txt: AGR, Archivo, Helvetica, Arial, sans-serif; --lt: AGL, Archivo, Helvetica, sans-serif; }
-  body { font-family: var(--txt); }
-  h1, h2, h3, .h3, .divider .big, .facts b { font-family: var(--cond); font-weight: 400; letter-spacing: 0; }
-  h1 { font-size: 104px; line-height: 1; } h2 { font-size: 68px; line-height: 1.08; margin-bottom: 40px; }
-  .hero h1 { font-size: 140px; letter-spacing: 0; } .hero h2 { font-size: 64px; } .divider .big, .divider h1 { font-size: 210px; letter-spacing: 0; }
-  .opt h3, .h3 { font-size: 46px; }
-  .lead, .divider p { font-family: var(--lt); letter-spacing: 0; }
-  .top, .bot, .label, .facts span, .t th, .insp, .note, .links, .steps li::before, .t td:last-child, #nav { font-family: var(--lab); }
-  .top, .bot { font-size: 19px; letter-spacing: .16em; } .label { font-size: 21px; letter-spacing: .18em; color: var(--mute); }
-  .facts b { font-size: 60px; } .facts span { font-size: 18px; letter-spacing: .14em; }
-  .t th { font-size: 18px; letter-spacing: .14em; } .t td:last-child { font-size: 19px; } .t3 td:last-child { font-family: var(--txt); font-size: inherit; }
-  .note { font-size: 20px; letter-spacing: .02em; } .insp, .divider p.insp { font-family: var(--lab); font-size: 22px; letter-spacing: .04em; } .insp b { color: var(--ink); font-weight: 400; }
-  .steps li::before { font-size: 22px; color: var(--mute); top: 18px; } .links { font-size: 20px; }
-  figcaption, .gf .c, .gf figcaption { font-family: var(--lt); font-size: 20px; } figcaption b { font-family: var(--txt); font-weight: 400; color: var(--ink); }
-  .steps b, .t b { font-weight: 700; }
+  /* --- typographie : les polices du site Hermès, Overpass Mono pour les titres et les repères, Manrope pour le texte --- */
+  :root { --mono: 'Overpass Mono', ui-monospace, Menlo, monospace; --txt: Manrope, Helvetica, Arial, sans-serif; }
+  body { font-family: var(--txt); font-weight: 400; }
+  h1, h2, h3, .h3, .divider .big, .facts b { font-family: var(--mono); font-weight: 400; letter-spacing: -.02em; }
+  h1 { font-size: 72px; line-height: 1.08; } h2 { font-size: 44px; line-height: 1.2; margin-bottom: 44px; }
+  .hero h1 { font-size: 96px; letter-spacing: -.03em; } .hero h2 { font-size: 44px; } .divider .big, .divider h1 { font-size: 150px; letter-spacing: -.04em; }
+  .opt h3, .h3 { font-size: 30px; }
+  p, .steps li { font-weight: 300; font-size: 26px; } .lead, .divider p { font-family: var(--txt); font-weight: 300; letter-spacing: 0; } .hero .lead { font-size: 36px; } .divider p { font-size: 36px; }
+  .top, .bot, .label, .facts span, .t th, .insp, .note, .links, .steps li::before, .t td:last-child, #nav { font-family: var(--mono); font-weight: 400; }
+  .top, .bot { font-size: 14px; letter-spacing: .1em; } .label { font-size: 15px; letter-spacing: .1em; color: var(--mute); }
+  .facts b { font-size: 40px; } .facts span { font-size: 13px; letter-spacing: .08em; }
+  .t { font-size: 21px; font-weight: 300; } .t th { font-size: 13px; letter-spacing: .08em; } .t td:last-child { font-size: 14px; } .t3 td:last-child { font-family: var(--txt); font-size: inherit; }
+  .note { font-size: 14px; letter-spacing: 0; } .insp, .divider p.insp { font-family: var(--mono); font-size: 15px; letter-spacing: 0; } .insp b { color: var(--ink); font-weight: 400; }
+  .steps li::before { font-size: 15px; color: var(--mute); top: 20px; } .links { font-size: 15px; }
+  figcaption, .gf .c, .gf figcaption { font-family: var(--txt); font-weight: 300; font-size: 17px; } figcaption b { font-weight: 500; color: var(--ink); }
+  .steps b, .t b { font-weight: 600; }
 </style>
 </head>
 <body class="show">
@@ -566,9 +561,9 @@
 <section class="slide" data-name="drones">
   <div class="top"><span>Palais Brongniart</span><span>Ouverture</span></div>
   <div class="label">Le soir de l’ouverture</div>
-  <h2>Un spectacle de drones, déjà chorégraphié</h2>
-  <iframe data-src="drones.html?show=souffle" title="Chorégraphie des drones" style="position:absolute;left:140px;top:300px;width:1640px;height:590px;border:0"></iframe>
-  <figcaption style="position:absolute;left:140px;top:906px"><b>Le logiciel</b> · un spectacle par idée, 1 200 drones, six tableaux, écart et vitesse vérifiés, trajectoires exportables · écrit avec Claude Code</figcaption>
+  <h2>Un spectacle de drones</h2>
+  <iframe data-src="drones.html?show=souffle&amp;ui=0" title="Chorégraphie des drones" style="position:absolute;left:140px;top:300px;width:1640px;height:590px;border:0"></iframe>
+  <figcaption style="position:absolute;left:140px;top:906px"><b>Spectacle de drones</b> · 1 200 drones, six tableaux, de 1826 à 2026</figcaption>
   <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
 </section>
 
