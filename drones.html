@@ -87,6 +87,11 @@ function garden(open) { const P = [], C = [];
 const wave = (A, w) => (p, t) => [p[0], p[1] + A * Math.sin(p[0] * .11 + p[2] * .09 - t * w), p[2]];
 const all = (P, c) => ({ P, C: P.map(typeof c === 'function' ? c : () => c) });
 const SHOWS = {
+  ouverture: { name: 'Ouverture', tabs: [
+    { t: '1826', ...date('1826') },
+    { t: '200 ans', ...date('200') },
+    { t: 'le ciel se soulève', ...all(grid(112, 40, (x, z) => [x, 46, 2 + z]), (p, i) => i % 3 ? BLU : WH), anim: wave(8, 1.8) },
+    { t: '2026', ...date('2026') }] },
   souffle: { name: 'Le Souffle', tabs: [
     { t: '1826', ...date('1826') },
     { t: 'une nappe de lumière', ...all(grid(112, 40, (x, z) => [x, 44, 2 + z]), BLU) },
@@ -120,7 +125,7 @@ function prepare(show) { const T = show.tabs; let t0 = 0;
     tb.move = Math.max(5, d / VMAX); tb.v = d / tb.move; tb.t0 = t0; t0 += HOLD + tb.move; });
   show.dur = t0; show.sep = Math.min(...T.map(t => t.sep)); show.v = Math.max(...T.map(t => t.v)); }
 Object.values(SHOWS).forEach(prepare);
-let cur = SHOWS[Q.get('show')] ? Q.get('show') : 'souffle', time = +(Q.get('t') || 0), playing = true, last = performance.now();
+let cur = SHOWS[Q.get('show')] ? Q.get('show') : 'ouverture', time = +(Q.get('t') || 0), playing = true, last = performance.now();
 function select(s) { cur = s; time = 0; document.querySelectorAll('#bar [data-s]').forEach(b => b.classList.toggle('on', b.dataset.s === s)); const S = SHOWS[s];
   $('top').textContent = `Palais Brongniart · ${S.name} · le soir de l’ouverture`;
   $('chk').innerHTML = `<b>${N.toLocaleString('fr-FR')}</b> drones · <b>${S.tabs.length}</b> tableaux · <b>${Math.round(S.dur)}</b> s<br>écart mini en tableau <b class="${S.sep < SEP ? 'bad' : ''}">${S.sep.toFixed(1).replace('.', ',')} m</b><br>vitesse max <b class="${S.v > VMAX + .01 ? 'bad' : ''}">${S.v.toFixed(1).replace('.', ',')} m/s</b>`; }
@@ -139,7 +144,7 @@ document.querySelectorAll('#bar [data-s]').forEach(b => b.onclick = () => select
 $('exp').onclick = () => { const S = SHOWS[cur], rows = ['spectacle;tableau;titre;debut_s;tenue_s;vol_s;drone;x_m;y_m;z_m;r;g;b'];
   S.tabs.forEach((tb, k) => tb.Q.forEach((p, i) => rows.push([cur, k + 1, tb.t, tb.t0.toFixed(1), HOLD, tb.move.toFixed(1), i + 1, ...p.map(v => v.toFixed(2)), ...tb.K[i].map(v => Math.round(v * 255))].join(';'))));
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv' })); a.download = `brongniart_drones_${cur}.csv`; a.click(); };
-addEventListener('keydown', e => { if (e.key === ' ') { $('play').click(); e.preventDefault(); } if (['1', '2', '3'].includes(e.key)) select(Object.keys(SHOWS)[+e.key - 1]);
+addEventListener('keydown', e => { if (e.key === ' ') { $('play').click(); e.preventDefault(); } if (['1', '2', '3'].includes(e.key)) select(['souffle', 'bulle', 'jardin'][+e.key - 1]);
   if (['ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Escape'].includes(e.key) && parent !== window) parent.dispatchEvent(new KeyboardEvent('keydown', { key: e.key })); });
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 window.DRONES = { SHOWS, N }; select(cur); time = +(Q.get('t') || 0); requestAnimationFrame(frame);
