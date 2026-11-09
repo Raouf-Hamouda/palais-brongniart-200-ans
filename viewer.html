@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bourse · Cascading Keys</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #f4f4f4; font-family: ui-monospace, "SF Mono", Menlo, monospace; overflow: hidden; }
+  #app { position: fixed; inset: 0; }
+  #hud {
+    position: fixed; left: 16px; bottom: 14px; color: #1a1a1a; font-size: 12px; line-height: 1.5;
+    background: rgba(255,255,255,.78); padding: 10px 14px; border: 1px solid #1f3fff; border-radius: 4px;
+    pointer-events: none; user-select: none; backdrop-filter: blur(6px);
+  }
+  #hud b { color: #1f3fff; }
+  #title { position: fixed; left: 16px; top: 14px; color: #1f3fff; font-size: 12px; letter-spacing: .25em; pointer-events: none; }
+  .lil-gui { --width: 300px; --font-family: ui-monospace, Menlo, monospace; --font-size: 11px; --background-color: #ffffff; --text-color: #1a1a1a; --title-background-color: #1f3fff; --title-text-color: #fff; --widget-color: #eef1ff; --hover-color: #e0e6ff; --focus-color: #c8d2ff; --number-color: #1f3fff; --string-color: #1f3fff; }
+  .lil-gui.root { border: 1px solid #1f3fff; }
+  #hint { position: fixed; right: 16px; bottom: 14px; color: #666; font-size: 11px; pointer-events: none; text-align: right; line-height: 1.6; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.167.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.167.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="title">PALAIS BRONGNIART · CASCADING KEYS</div>
+<div id="hud"></div>
+<div id="hint">drag = orbit · wheel = zoom · right drag = pan<br>drag a sheet = pull it off · click a sheet = pop out / put back · click the wall = ripple · hold H = hand<br>1 2 3 4 5 = camera presets · space = freeze</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import GUI from 'three/addons/libs/lil-gui.module.min.js';
+
+// ---------------------------------------------------------------------------
+// 1. The building, from the elevation drawing (metres, y up, façade faces +z)
+// ---------------------------------------------------------------------------
+const B = {
+  total: 78.7,      // across both wings
+  platform: 49.5,   // colonnade, 14 columns
+  columns: 14,
+  bay: 3.56,        // column spacing
+  base: 2.75,       // podium / steps height
+  column: 11.8,     // column shaft height
+  entab: 2.9,       // entablature with BOURSE
+  attic: 1.4,       // attic above entablature
+  roofTop: 30,      // ridge, far behind the front
+  depth: 54,        // body depth (real Palais ≈ 69 m, shortened)
+  person: 1.75,
+  bus: 12,
+};
+B.wing = (B.total - B.platform) / 2;          // 14.6 m each
+B.topColumn = B.base + B.column;              // 14.55
+B.topEntab = B.topColumn + B.entab;           // 17.45
+B.topAttic = B.topEntab + B.attic;            // 18.85  ≈ "19 m to the top of the attic"
+
+// ---------------------------------------------------------------------------
+// 2. Scene
+// ---------------------------------------------------------------------------
+const app = document.getElementById('app');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#f4f4f4');
+scene.fog = new THREE.Fog('#f4f4f4', 160, 420);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 1200);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI / 2 - 0.01;
+controls.target.set(0, 9, 0);
+
+const CAM = {
+  street:   { pos: [-38, 1.7, 46],  tgt: [0, 9, 0] },
+  drone:    { pos: [-60, 34, 70],   tgt: [0, 8, 0] },
+  elevation:{ pos: [0, 10, 118],    tgt: [0, 10, 0] },
+  close:    { pos: [-9, 6, 11],     tgt: [-3, 8, 0] },
+  columns:  { pos: [-22, 3, 26],    tgt: [-4, 9, -2] },
+};
+function goCam(name, instant = false) {
+  const c = CAM[name];
+  if (instant) { camera.position.set(...c.pos); controls.target.set(...c.tgt); return; }
+  camTween = { from: camera.position.clone(), to: new THREE.Vector3(...c.pos), tf: controls.target.clone(), tt: new THREE.Vector3(...c.tgt), t: 0 };
+}
+let camTween = null;
+goCam('street', true);
+
+// Light: sun with shadows, sky hemisphere
+const sun = new THREE.DirectionalLight('#fff6e8', 3.2);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+sun.shadow.camera.left = -90; sun.shadow.camera.right = 90;
+sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -20;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 400;
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.02;
+scene.add(sun, sun.target);
+const hemi = new THREE.HemisphereLight('#dfe8ff', '#8d8a80', 0.9);
+scene.add(hemi);
+
+// ---------------------------------------------------------------------------
+// 3. Materials
+// ---------------------------------------------------------------------------
+const stone = new THREE.MeshStandardMaterial({ color: '#e9e5dc', roughness: 0.92, metalness: 0 });
+const stoneDark = new THREE.MeshStandardMaterial({ color: '#d4cfc4', roughness: 0.95 });
+const glass = new THREE.MeshStandardMaterial({ color: '#9aa3ad', roughness: 0.35, metalness: 0.2 });
+const roofMat = new THREE.MeshStandardMaterial({ color: '#6f7378', roughness: 0.8 });
+const ground = new THREE.MeshStandardMaterial({ color: '#cfccc4', roughness: 1 });
+const asphalt = new THREE.MeshStandardMaterial({ color: '#8f8f8c', roughness: 1 });
+
+function box(w, h, d, mat, x, y, z, parent = scene) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y + h / 2, z);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+
+// ---------------------------------------------------------------------------
+// 4. Build the Palais
+// ---------------------------------------------------------------------------
+let flag;
+const palais = new THREE.Group();
+scene.add(palais);
+const FRONT = 0;                         // z of the column faces
+const WALL = -4.2;                       // recessed wall behind the colonnade
+const half = B.platform / 2;
+
+// ground + street
+{
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), ground);
+  g.rotation.x = -Math.PI / 2; g.receiveShadow = true; scene.add(g);
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(300, 14), asphalt);
+  road.rotation.x = -Math.PI / 2; road.position.set(0, 0.01, 40); road.receiveShadow = true; scene.add(road);
+}
+
+// podium under the whole front + body
+box(B.total, B.base, B.depth, stone, 0, 0, WALL - B.depth / 2 + 4.2, palais);
+// main body behind the colonnade, up to attic
+box(B.platform + 0.6, B.topAttic, B.depth - 4, stone, 0, 0, WALL - (B.depth - 4) / 2, palais);
+// recessed wall face between columns, with two rows of arched windows
+{
+  const wall = box(B.platform, B.column, 0.4, stoneDark, 0, B.base, WALL + 0.2, palais);
+  const win = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 3.6), glass);
+  const arch = new THREE.Mesh(new THREE.CircleGeometry(0.8, 24, 0, Math.PI), glass);
+  for (let i = 0; i < B.columns - 1; i++) {
+    const x = -half + B.bay * (i + 1);
+    for (const y of [B.base + 2.2, B.base + 7.2]) {
+      const w = win.clone(); w.position.set(x, y + 1.8, WALL + 0.45); palais.add(w);
+      const a = arch.clone(); a.position.set(x, y + 3.6, WALL + 0.45); palais.add(a);
+    }
+  }
+}
+// 14 columns on the platform
+{
+  const shaft = new THREE.CylinderGeometry(0.78, 0.9, B.column - 1.6, 28);
+  const cap = new THREE.BoxGeometry(2.2, 1.0, 2.2);
+  const neck = new THREE.CylinderGeometry(0.95, 0.78, 0.6, 28);
+  const plinth = new THREE.BoxGeometry(2.0, 0.6, 2.0);
+  for (let i = 0; i < B.columns; i++) {
+    const x = -half + B.bay / 2 + i * B.bay;
+    const col = new THREE.Group();
+    const p = new THREE.Mesh(plinth, stone); p.position.y = 0.3; col.add(p);
+    const s = new THREE.Mesh(shaft, stone); s.position.y = 0.6 + (B.column - 1.6) / 2; col.add(s);
+    const n = new THREE.Mesh(neck, stone); n.position.y = B.column - 1.0 + 0.3; col.add(n);
+    const c = new THREE.Mesh(cap, stone); c.position.y = B.column - 0.5; col.add(c);
+    col.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+    col.position.set(x, B.base, FRONT - 1.1);
+    palais.add(col);
+  }
+}
+// entablature with BOURSE + attic, slightly proud of the columns
+{
+  const ent = box(B.platform + 1.2, B.entab, 6, stone, 0, B.topColumn, FRONT - 2.4, palais);
+  const att = box(B.platform + 0.4, B.attic, 5.2, stone, 0, B.topEntab, FRONT - 2.6, palais);
+  // lettering as a canvas texture on the front face
+  const cv = document.createElement('canvas'); cv.width = 2048; cv.height = 128;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#e9e5dc'; ctx.fillRect(0, 0, 2048, 128);
+  ctx.fillStyle = '#4a4740'; ctx.font = '600 72px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '26px';
+  ctx.fillText('B O U R S E', 1024, 66);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const band = new THREE.Mesh(new THREE.PlaneGeometry(B.platform + 1.2, 1.3), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 }));
+  band.position.set(0, B.topColumn + B.entab * 0.5, FRONT + 0.61);
+  palais.add(band);
+  // flag pole + flag
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 7, 8), roofMat);
+  pole.position.set(0, B.topAttic + 3.5, FRONT - 2.6); palais.add(pole);
+  flag = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.4, 12, 6), new THREE.MeshStandardMaterial({ color: '#1f3fff', side: THREE.DoubleSide }));
+  flag.position.set(1.1, B.topAttic + 6.2, FRONT - 2.6); palais.add(flag);
+}
+// wings: north (left, -x) and south (right, +x), pilasters, top band level with the entablature
+for (const side of [-1, 1]) {
+  const cx = side * (half + B.wing / 2);
+  const w = box(B.wing, B.topEntab, 22, stone, cx, 0, FRONT - 11 - 0.6, palais);
+  box(B.wing, 1.2, 22.4, stoneDark, cx, B.topColumn + 0.4, FRONT - 11 - 0.6, palais); // band
+  // 4 pilasters per wing
+  for (let i = 0; i < 4; i++) {
+    const px = cx - B.wing / 2 + B.wing * (i + 0.5) / 4;
+    box(1.1, B.column, 0.5, stone, px, B.base, FRONT - 0.4, palais);
+  }
+  // door in the north wing, 1.75 m person beside it
+  if (side === -1) {
+    box(1.4, 2.6, 0.2, glass, cx + 3, 0, FRONT - 0.25, palais);
+  }
+}
+// grand steps in front of the colonnade (the hatched block in the drawing)
+{
+  const steps = 10, run = 0.42, rise = B.base / steps;
+  for (let i = 0; i < steps; i++) {
+    box(B.platform - 2, rise, run * (steps - i) + 1.5, stoneDark, 0, i * rise, FRONT + (run * (steps - i) + 1.5) / 2 - 0.2, palais);
+  }
+}
+// roof far behind: hipped mass up to 30 m
+{
+  const roofW = B.platform - 2, roofD = B.depth - 16, h = B.roofTop - B.topAttic;
+  const geo = new THREE.CylinderGeometry(0, 1, 1, 4, 1);
+  const roof = new THREE.Mesh(geo, roofMat);
+  roof.scale.set(roofW / Math.SQRT2 * 1.0, h, roofD / Math.SQRT2);
+  roof.rotation.y = Math.PI / 4;
+  roof.position.set(0, B.topAttic + h / 2, WALL - roofD / 2 - 6);
+  roof.castShadow = roof.receiveShadow = true;
+  palais.add(roof);
+}
+// scale figures: 1.75 m person, 12 m city bus
+{
+  const p = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, B.person - 0.44, 4, 10), new THREE.MeshStandardMaterial({ color: '#1f3fff' }));
+  p.position.set(-half - 5, B.person / 2, 6); p.castShadow = true; scene.add(p);
+  const bus = new THREE.Group();
+  const body = box(B.bus, 3.0, 2.55, new THREE.MeshStandardMaterial({ color: '#f2f2f2', roughness: 0.5 }), 0, 0.5, 0, bus);
+  box(B.bus - 1, 1.1, 2.6, glass, 0, 1.7, 0, bus);
+  for (const x of [-4, 4]) for (const z of [-1.1, 1.1]) {
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.3, 16), roofMat);
+    wheel.rotation.x = Math.PI / 2; wheel.position.set(x, 0.5, z); bus.add(wheel);
+  }
+  bus.position.set(half + 10, 0, 40); bus.rotation.y = 0.02; scene.add(bus);
+}
+
+// ---------------------------------------------------------------------------
+// 5. Noise (3D simplex, small, for the wind field)
+// ---------------------------------------------------------------------------
+const Noise = (() => {
+  const grad3 = [[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+  const p = new Uint8Array(256); let s = 1337;
+  for (let i = 0; i < 256; i++) p[i] = i;
+  for (let i = 255; i > 0; i--) { s = (s * 16807) % 2147483647; const j = s % (i + 1); [p[i], p[j]] = [p[j], p[i]]; }
+  const perm = new Uint8Array(512), pm = new Uint8Array(512);
+  for (let i = 0; i < 512; i++) { perm[i] = p[i & 255]; pm[i] = perm[i] % 12; }
+  const F3 = 1 / 3, G3 = 1 / 6;
+  const dot = (g, x, y, z) => g[0] * x + g[1] * y + g[2] * z;
+  return function noise3(xin, yin, zin) {
+    const s = (xin + yin + zin) * F3;
+    const i = Math.floor(xin + s), j = Math.floor(yin + s), k = Math.floor(zin + s);
+    const t = (i + j + k) * G3;
+    const x0 = xin - (i - t), y0 = yin - (j - t), z0 = zin - (k - t);
+    let i1, j1, k1, i2, j2, k2;
+    if (x0 >= y0) { if (y0 >= z0) { i1=1;j1=0;k1=0;i2=1;j2=1;k2=0; } else if (x0 >= z0) { i1=1;j1=0;k1=0;i2=1;j2=0;k2=1; } else { i1=0;j1=0;k1=1;i2=1;j2=0;k2=1; } }
+    else { if (y0 < z0) { i1=0;j1=0;k1=1;i2=0;j2=1;k2=1; } else if (x0 < z0) { i1=0;j1=1;k1=0;i2=0;j2=1;k2=1; } else { i1=0;j1=1;k1=0;i2=1;j2=1;k2=0; } }
+    const x1 = x0 - i1 + G3, y1 = y0 - j1 + G3, z1 = z0 - k1 + G3;
+    const x2 = x0 - i2 + 2*G3, y2 = y0 - j2 + 2*G3, z2 = z0 - k2 + 2*G3;
+    const x3 = x0 - 1 + 3*G3, y3 = y0 - 1 + 3*G3, z3 = z0 - 1 + 3*G3;
+    const ii = i & 255, jj = j & 255, kk = k & 255;
+    let n = 0, t0;
+    t0 = 0.6 - x0*x0 - y0*y0 - z0*z0; if (t0 > 0) { t0 *= t0; n += t0 * t0 * dot(grad3[pm[ii+perm[jj+perm[kk]]]], x0, y0, z0); }
+    t0 = 0.6 - x1*x1 - y1*y1 - z1*z1; if (t0 > 0) { t0 *= t0; n += t0 * t0 * dot(grad3[pm[ii+i1+perm[jj+j1+perm[kk+k1]]]], x1, y1, z1); }
+    t0 = 0.6 - x2*x2 - y2*y2 - z2*z2; if (t0 > 0) { t0 *= t0; n += t0 * t0 * dot(grad3[pm[ii+i2+perm[jj+j2+perm[kk+k2]]]], x2, y2, z2); }
+    t0 = 0.6 - x3*x3 - y3*y3 - z3*z3; if (t0 > 0) { t0 *= t0; n += t0 * t0 * dot(grad3[pm[ii+1+perm[jj+1+perm[kk+1]]]], x3, y3, z3); }
+    return 32 * n;
+  };
+})();
+
+// ---------------------------------------------------------------------------
+// 6. The kinetic skin: keys hung from a top hinge on horizontal rods
+// ---------------------------------------------------------------------------
+const P = {
+  // keys
+  preset: 'Cascading Keys',
+  keyW: 0.30, keyH: 0.42, gapX: 0.08, gapY: 0.10, thickness: 0.002, density: 2700,
+  coverage: 'between columns', standoff: 1.2, bottom: B.base, top: B.topEntab,
+  // colours
+  front: '#1f3fff', back: '#f4f4f4', rods: '#2b2b2b', metalness: 0.85, roughness: 0.32,
+  // wind
+  mode: 'wind', wind: 5.5, direction: 20, gust: 0.6, turbulence: 0.14, turbSpeed: 0.35,
+  // wavefronts (Ned Kahn / moving curves)
+  waveSpeed: 9, waveLength: 14, waveAngle: -25, waveAmp: 1.0,
+  // physics
+  damping: 1.6, maxAngle: 80, twist: 0.25,
+  // hand
+  handRadius: 2.5, handForce: 25,
+  // scene
+  timeOfDay: 15.5, exposure: 1.0, freeze: false, shadows: true,
+  explode: 0, reassemble() { det.fill(0); dx.fill(0); dy.fill(0); dz.fill(0); P.explode = 0; gui.controllersRecursive().forEach(c => c.updateDisplay()); },
+};
+
+const skin = new THREE.Group();
+scene.add(skin);
+let keys = null;          // InstancedMesh
+let rodsMesh = null;
+let N = 0;
+let kx, ky, th, om, tw, twv, seedA;    // per-key arrays
+let cols = 0, rows = 0, pitchX = 0, pitchY = 0, x0 = 0, y0 = 0;
+let spans = [];           // [xStart, xEnd] of the covered strips
+
+const dummy = new THREE.Object3D();
+const matFront = new THREE.MeshStandardMaterial({ color: P.front, metalness: P.metalness, roughness: P.roughness, side: THREE.FrontSide });
+const matBack = new THREE.MeshStandardMaterial({ color: P.back, metalness: P.metalness, roughness: P.roughness, side: THREE.FrontSide });
+const matEdge = new THREE.MeshStandardMaterial({ color: '#9a9a9a', metalness: 0.9, roughness: 0.4 });
+const matRod = new THREE.MeshStandardMaterial({ color: P.rods, metalness: 0.6, roughness: 0.5 });
+
+function bays() {
+  // strip between each pair of column shafts, 1.05 m clear of each shaft centre
+  const s = [];
+  for (let i = 0; i < B.columns - 1; i++) {
+    const a = -half + B.bay / 2 + i * B.bay;
+    s.push([a + 0.35, a + B.bay - 0.35, FRONT - 2.0]);   // curtain behind the column shafts
+  }
+  return s;
+}
+function behindColumns() { return P.coverage.startsWith('between columns'); }
+function skinZ() { return behindColumns() ? FRONT - 2.0 : FRONT + P.standoff; }
+let kz;   // per-key z
+let det, dx, dy, dz, ex, ey, ez;   // detached flag, drag offset, explode direction
+function skinTop() { return behindColumns() ? Math.min(P.top, B.topColumn - 0.3) : P.top; }
+function coverageSpans() {
+  const L = -B.total / 2, R = B.total / 2;
+  switch (P.coverage) {
+    case 'colonnade': return [[-half, half]];
+    case 'wings': return [[L, -half], [half, R]];
+    case 'full front': return [[L, R]];
+    case 'between columns': return bays();
+    case 'between columns + wings': return [[L, -half, FRONT + 0.25], ...bays(), [half, R, FRONT + 0.25]];
+    case 'checker bays': { const s = []; for (let i = 0; i < B.columns; i += 2) s.push([-half + i * B.bay, -half + (i + 1) * B.bay]); return s; }
+    default: return [[L, R]];
+  }
+}
+
+function buildSkin() {
+  if (keys) { skin.remove(keys); keys.geometry.dispose(); keys = null; }
+  if (rodsMesh) { skin.remove(rodsMesh); rodsMesh.geometry.dispose(); rodsMesh = null; }
+  pitchX = P.keyW + P.gapX; pitchY = P.keyH + P.gapY;
+  spans = coverageSpans();
+  const top = skinTop();
+  const H = top - P.bottom;
+  rows = Math.max(1, Math.floor(H / pitchY));
+  // count
+  const colsPer = spans.map(([a, b]) => Math.floor((b - a) / pitchX));
+  N = colsPer.reduce((s, c) => s + c * rows, 0);
+  if (N > 60000) { N = 60000; }
+  kx = new Float32Array(N); ky = new Float32Array(N); th = new Float32Array(N); om = new Float32Array(N);
+  tw = new Float32Array(N); twv = new Float32Array(N); seedA = new Float32Array(N); kz = new Float32Array(N);
+  det = new Uint8Array(N); dx = new Float32Array(N); dy = new Float32Array(N); dz = new Float32Array(N);
+  ex = new Float32Array(N); ey = new Float32Array(N); ez = new Float32Array(N);
+
+  // geometry: pivot at the top edge. groups: 0 +x,1 -x,2 +y,3 -y,4 +z(front),5 -z(back)
+  const geo = new THREE.BoxGeometry(P.keyW, P.keyH, P.thickness);
+  geo.translate(0, -P.keyH / 2, 0);
+  keys = new THREE.InstancedMesh(geo, [matEdge, matEdge, matEdge, matEdge, matFront, matBack], N);
+  keys.castShadow = true; keys.receiveShadow = true;
+  keys.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+  // rods: one thin cylinder per row per span, plus vertical hangers every ~2.4 m
+  const rodGeos = [];
+  let i = 0;
+  spans.forEach(([a, b, zs], si) => {
+    const z = zs ?? skinZ();
+    const c = colsPer[si];
+    const xStart = a + ((b - a) - c * pitchX) / 2 + pitchX / 2;
+    for (let r = 0; r < rows; r++) {
+      const y = top - r * pitchY - P.gapY * 0.5;
+      const rod = new THREE.CylinderGeometry(0.012, 0.012, b - a, 6);
+      rod.rotateZ(Math.PI / 2); rod.translate((a + b) / 2, y, z + 0.015);
+      rodGeos.push(rod);
+      for (let col = 0; col < c && i < N; col++) {
+        kx[i] = xStart + col * pitchX; ky[i] = y; kz[i] = z;
+        th[i] = 0; om[i] = 0; tw[i] = 0; twv[i] = 0;
+        seedA[i] = Math.random() * 1000;
+        ex[i] = (Math.random() - 0.5) * 3; ey[i] = (Math.random() - 0.5) * 3; ez[i] = 4 + Math.random() * 10;
+        i++;
+      }
+    }
+    for (let x = a + 1.2; x < b; x += 2.4) {
+      const h = new THREE.BoxGeometry(0.05, top - P.bottom + 0.3, 0.05);
+      h.translate(x, (top + P.bottom) / 2, z - 0.08);
+      rodGeos.push(h);
+    }
+    // top and bottom rails
+    for (const y of [top + 0.1, P.bottom - 0.1]) {
+      const rail = new THREE.BoxGeometry(b - a, 0.12, 0.12); rail.translate((a + b) / 2, y, z - 0.08); rodGeos.push(rail);
+    }
+  });
+  N = i;
+  keys.count = N;
+  // merge rods by hand (avoid an addon import)
+  rodsMesh = new THREE.Mesh(mergeGeos(rodGeos), matRod);
+  rodsMesh.castShadow = true;
+  skin.add(rodsMesh, keys);
+  updateInstances(0);
+  hud();
+}
+
+function mergeGeos(list) {
+  let vCount = 0, iCount = 0;
+  for (const g of list) { vCount += g.attributes.position.count; iCount += g.index.count; }
+  const pos = new Float32Array(vCount * 3), nor = new Float32Array(vCount * 3), idx = new Uint32Array(iCount);
+  let vo = 0, io = 0;
+  for (const g of list) {
+    pos.set(g.attributes.position.array, vo * 3); nor.set(g.attributes.normal.array, vo * 3);
+    const gi = g.index.array; for (let k = 0; k < gi.length; k++) idx[io + k] = gi[k] + vo;
+    vo += g.attributes.position.count; io += gi.length; g.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  out.setIndex(new THREE.BufferAttribute(idx, 1));
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// 7. Wind field + physics
+// ---------------------------------------------------------------------------
+const ripples = [];        // {x, y, t0, strength}
+const hand = { on: false, x: 0, y: 0, vx: 0, vy: 0, px: 0, py: 0 };
+let simTime = 0;
+
+// pressure on a key at (x, y): positive pushes the key away from the wall (+z)
+function windAt(x, y, t) {
+  const dir = P.direction * Math.PI / 180;          // 0 = straight onto the façade
+  const normal = Math.cos(dir);                      // component hitting the plates
+  const along = Math.sin(dir);                       // component sliding along the wall (drives the cascade)
+  let w = 0;
+  if (P.mode === 'wind' || P.mode === 'wind + waves') {
+    // base + gust envelope (slow noise) + turbulence (advected noise)
+    const gust = 1 + P.gust * Noise(t * 0.25, 7.1, 3.3);
+    const xs = x * P.turbulence - along * t * P.turbSpeed * P.wind * 0.25;
+    const ys = y * P.turbulence * 1.6;
+    const turb = Noise(xs, ys, t * P.turbSpeed) * 0.75 + Noise(xs * 2.3, ys * 2.3, t * P.turbSpeed * 1.7) * 0.25;
+    w += P.wind * gust * (normal + 0.9 * turb);
+  }
+  if (P.mode === 'waves' || P.mode === 'wind + waves' || P.mode === 'ned kahn') {
+    // travelling wavefronts: moving curves across the wall
+    const a = P.waveAngle * Math.PI / 180;
+    const u = x * Math.cos(a) + y * Math.sin(a);
+    const k = 2 * Math.PI / P.waveLength;
+    const front = Math.sin(k * (u - P.waveSpeed * t));
+    const env = 0.5 + 0.5 * Noise(x * 0.03, y * 0.05, t * 0.15);   // patches of calm
+    w += P.waveAmp * 8 * Math.max(front, -0.2) * env;
+    if (P.mode === 'ned kahn') {
+      // many fine, fast flutters on top of the fronts
+      w += 3 * Noise(x * 0.5 - t * 3, y * 0.6, t * 1.2);
+    }
+  }
+  if (P.mode === 'calm') w += 1.2 * Noise(x * 0.2, y * 0.2, t * 0.2);
+  // ripples from clicks: expanding ring
+  for (const r of ripples) {
+    const age = t - r.t0;
+    const dist = Math.hypot(x - r.x, y - r.y);
+    const ring = dist - age * 14;
+    if (Math.abs(ring) < 3) w += r.strength * Math.exp(-age * 0.45) * Math.cos(ring * 0.9) * (1 - Math.abs(ring) / 3) * 12;
+  }
+  // hand: pushes keys under the cursor (m/s equivalent), with its own motion
+  if (hand.on) {
+    const d = Math.hypot(x - hand.x, y - hand.y);
+    if (d < P.handRadius) {
+      const f = (1 - d / P.handRadius);
+      w += P.handForce * f * (0.6 + 0.4 * Math.sign(hand.vx === 0 ? 1 : hand.vx) * Math.min(1, Math.abs(hand.vx) * 0.3));
+    }
+  }
+  return w;
+}
+
+function step(dt) {
+  // one key = thin aluminium plate hinged at its top edge
+  //   I = m h^2 / 3,  gravity torque = m g h/2 sin a,  wind torque = q A h/2 cos a,  q = 1/2 rho v|v|
+  //   => a'' = 1.5 g/h sin a  +  0.75 rho v|v| cos a / (sigma h)  - damping a'
+  const g = 9.81, rho = 1.2, h = P.keyH, sigma = P.density * P.thickness;
+  const kG = 1.5 * g / h, kW = 0.75 * rho / (sigma * h);
+  const maxA = P.maxAngle * Math.PI / 180;
+  const damp = P.damping;
+  const t = simTime;
+  const bump = 0.35;                      // stop hit when swinging back into the rod
+  for (let i = 0; i < N; i++) {
+    const x = kx[i], y = ky[i];
+    const a = th[i];
+    if (det[i]) {
+      // off the rod: hangs in the air, breathes a little with the wind, never flips open
+      const v = windAt(x, y, t) * 0.35;
+      const torque = -kG * Math.sin(a) + kW * v * Math.abs(v) * Math.cos(a) - damp * 2 * om[i];
+      om[i] += torque * dt; th[i] = THREE.MathUtils.clamp(a + om[i] * dt, -0.35, 0.35);
+      const shear = Noise(x * 0.4, y * 0.4, t * 2.0 + seedA[i] * 0.01) * 0.15;
+      twv[i] += (shear - 6 * tw[i] - 2.5 * twv[i]) * dt; tw[i] += twv[i] * dt;
+      continue;
+    }
+    const v = windAt(x, y, t + seedA[i] * 0.0001);        // m/s, + = blowing onto the wall
+    const torque = -kG * Math.sin(a) + kW * v * Math.abs(v) * Math.cos(a) - damp * om[i];
+    om[i] += torque * dt;
+    th[i] = a + om[i] * dt;
+    // the key cannot swing into the wall: hard stop with a small bounce
+    if (th[i] < -0.02) { th[i] = -0.02; om[i] = -om[i] * bump; }
+    if (th[i] > maxA) { th[i] = maxA; om[i] = -om[i] * bump; }
+    // slight yaw flutter driven by along-wall shear
+    const shear = Noise(x * 0.4, y * 0.4, t * 2.0 + seedA[i] * 0.01) * P.twist * Math.abs(v) * 0.3;
+    twv[i] += (shear - 6 * tw[i] - 2.5 * twv[i]) * dt;
+    tw[i] += twv[i] * dt;
+  }
+}
+
+function updateInstances() {
+  for (let i = 0; i < N; i++) {
+    dummy.position.set(kx[i] + dx[i] + P.explode * ex[i], ky[i] + dy[i] + P.explode * ey[i], kz[i] + dz[i] + P.explode * ez[i]);
+    dummy.rotation.set(th[i], tw[i], 0, 'YXZ');
+    dummy.updateMatrix();
+    keys.setMatrixAt(i, dummy.matrix);
+  }
+  keys.instanceMatrix.needsUpdate = true;
+}
+
+// ---------------------------------------------------------------------------
+// 8. Interaction: ripple on click, hand with H
+// ---------------------------------------------------------------------------
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const wallPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -(FRONT + 1.2));
+const hit = new THREE.Vector3();
+let hKey = false, downAt = 0;
+
+function wallPoint(ev) {
+  ndc.set((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  wallPlane.constant = -skinZ();
+  return ray.ray.intersectPlane(wallPlane, hit) ? hit : null;
+}
+let drag = null;   // {i, plane, grab}
+function pickKey(ev) {
+  ndc.set((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const h = ray.intersectObject(keys, false)[0];
+  return h ? { i: h.instanceId, p: h.point } : null;
+}
+renderer.domElement.addEventListener('pointerdown', ev => {
+  downAt = performance.now();
+  if (ev.button !== 0 || hKey) return;
+  const k = pickKey(ev);
+  if (!k) return;
+  // pull the sheet off its rod: it follows the cursor on a plane facing the camera
+  const n = camera.getWorldDirection(new THREE.Vector3());
+  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(n, k.p);
+  drag = { i: k.i, plane, grab: k.p.clone(), start: [dx[k.i], dy[k.i], dz[k.i]], moved: false };
+  det[k.i] = 1;
+  controls.enabled = false;
+});
+renderer.domElement.addEventListener('pointerup', ev => {
+  if (drag) {
+    const d = drag; drag = null; controls.enabled = !hKey;
+    if (!d.moved) { // simple click on a sheet: toggle it back on / off the rod
+      if (d.start[0] === 0 && d.start[1] === 0 && d.start[2] === 0) { dz[d.i] = 1.5; }   // pop it out
+      else { det[d.i] = 0; dx[d.i] = dy[d.i] = dz[d.i] = 0; }                         // put it back
+    }
+    return;
+  }
+  if (ev.button !== 0 || performance.now() - downAt > 220) return;
+  const p = wallPoint(ev);
+  if (p && p.y > P.bottom - 2 && p.y < P.top + 2 && Math.abs(p.x) < B.total / 2 + 2) ripples.push({ x: p.x, y: p.y, t0: simTime, strength: 1 });
+});
+renderer.domElement.addEventListener('pointermove', ev => {
+  if (drag) {
+    ndc.set((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const p = ray.ray.intersectPlane(drag.plane, hit);
+    if (p) {
+      const i = drag.i;
+      dx[i] = drag.start[0] + p.x - drag.grab.x; dy[i] = drag.start[1] + p.y - drag.grab.y; dz[i] = drag.start[2] + p.z - drag.grab.z;
+      if (Math.hypot(p.x - drag.grab.x, p.y - drag.grab.y, p.z - drag.grab.z) > 0.05) drag.moved = true;
+    }
+    return;
+  }
+  if (!hKey) { hand.on = false; return; }
+  const p = wallPoint(ev);
+  if (!p) { hand.on = false; return; }
+  hand.vx = (p.x - hand.x) * 10; hand.vy = (p.y - hand.y) * 10;
+  hand.x = p.x; hand.y = p.y; hand.on = true;
+});
+addEventListener('keydown', ev => {
+  if (ev.key === 'h' || ev.key === 'H') { hKey = true; controls.enabled = false; }
+  if (ev.key === ' ') { P.freeze = !P.freeze; gui.controllersRecursive().forEach(c => c.updateDisplay()); }
+  if (ev.key === '1') goCam('street'); if (ev.key === '2') goCam('drone'); if (ev.key === '3') goCam('elevation'); if (ev.key === '4') goCam('close'); if (ev.key === '5') goCam('columns');
+});
+addEventListener('keyup', ev => { if (ev.key === 'h' || ev.key === 'H') { hKey = false; hand.on = false; controls.enabled = true; } });
+
+// ---------------------------------------------------------------------------
+// 9. Sun / time of day
+// ---------------------------------------------------------------------------
+function setSun() {
+  const h = P.timeOfDay;
+  const az = ((h - 12) / 12) * Math.PI * 0.95;         // east at morning, west at evening
+  const el = Math.max(0.05, Math.sin((h - 6) / 12 * Math.PI)) * 1.15;
+  const r = 180;
+  sun.position.set(Math.sin(az) * r * Math.cos(el), Math.sin(el) * r, Math.cos(az) * r * Math.cos(el) * 0.6 + 40);
+  sun.target.position.set(0, 8, 0);
+  const warm = 1 - Math.min(1, el / 0.6);
+  sun.color.setRGB(1, 0.96 - warm * 0.25, 0.9 - warm * 0.55);
+  sun.intensity = 1.2 + 2.4 * Math.min(1, el / 0.9);
+  hemi.intensity = 0.45 + 0.6 * Math.min(1, el / 0.9);
+  const sky = new THREE.Color().setRGB(0.957 - warm * 0.1, 0.957 - warm * 0.2, 0.957 - warm * 0.25);
+  scene.background = sky; scene.fog.color = sky;
+  renderer.toneMappingExposure = P.exposure;
+}
+
+// ---------------------------------------------------------------------------
+// 10. GUI
+// ---------------------------------------------------------------------------
+const PRESETS = {
+  'Cascading Keys': { keyW: 0.30, keyH: 0.42, gapX: 0.06, gapY: 0.09, damping: 1.6, maxAngle: 80, twist: 0.25, mode: 'wind' },
+  'Ned Kahn veil':  { keyW: 0.15, keyH: 0.15, gapX: 0.02, gapY: 0.02, damping: 2.4, maxAngle: 70, twist: 0.1, mode: 'ned kahn' },
+  'Large shingles': { keyW: 0.6, keyH: 0.9, gapX: 0.08, gapY: 0.12, damping: 1.2, maxAngle: 60, twist: 0.15, mode: 'wind + waves' },
+  'Drawing blue':   { front: '#1f3fff', back: '#f4f4f4' },
+  'Aluminium':      { front: '#c9ccd1', back: '#8d9095', metalness: 0.95, roughness: 0.28 },
+  'Brass':          { front: '#c9a24a', back: '#5a4320', metalness: 0.95, roughness: 0.35 },
+};
+const gui = new GUI({ title: 'BOURSE · CASCADING KEYS' });
+gui.add(P, 'preset', Object.keys(PRESETS)).name('preset').onChange(v => {
+  Object.assign(P, PRESETS[v]);
+  matFront.color.set(P.front); matBack.color.set(P.back);
+  matFront.metalness = matBack.metalness = P.metalness; matFront.roughness = matBack.roughness = P.roughness;
+  gui.controllersRecursive().forEach(c => c.updateDisplay());
+  buildSkin();
+});
+const fk = gui.addFolder('keys');
+fk.add(P, 'coverage', ['full front', 'colonnade', 'wings', 'checker bays', 'between columns', 'between columns + wings']).onChange(buildSkin);
+fk.add(P, 'keyW', 0.08, 1.2, 0.01).name('width m').onFinishChange(buildSkin);
+fk.add(P, 'keyH', 0.08, 1.6, 0.01).name('height m').onFinishChange(buildSkin);
+fk.add(P, 'gapX', 0, 0.4, 0.01).name('gap x').onFinishChange(buildSkin);
+fk.add(P, 'gapY', 0, 0.4, 0.01).name('gap y').onFinishChange(buildSkin);
+fk.add(P, 'thickness', 0.0005, 0.006, 0.0001).name('plate m (alu)');
+fk.add(P, 'standoff', 0.3, 4, 0.1).name('standoff m');
+fk.add(P, 'bottom', 0, 12, 0.1).name('from y').onFinishChange(buildSkin);
+fk.add(P, 'top', 6, B.topAttic, 0.1).name('to y').onFinishChange(buildSkin);
+const fc = gui.addFolder('colour');
+fc.addColor(P, 'front').name('front face').onChange(v => matFront.color.set(v));
+fc.addColor(P, 'back').name('back face').onChange(v => matBack.color.set(v));
+fc.addColor(P, 'rods').onChange(v => matRod.color.set(v));
+fc.add(P, 'metalness', 0, 1, 0.01).onChange(v => { matFront.metalness = matBack.metalness = v; });
+fc.add(P, 'roughness', 0, 1, 0.01).onChange(v => { matFront.roughness = matBack.roughness = v; });
+const fw = gui.addFolder('wind');
+fw.add(P, 'mode', ['wind', 'waves', 'wind + waves', 'ned kahn', 'calm']);
+fw.add(P, 'wind', 0, 20, 0.1).name('speed m/s');
+fw.add(P, 'direction', -90, 90, 1).name('direction °');
+fw.add(P, 'gust', 0, 1.5, 0.01);
+fw.add(P, 'turbulence', 0.02, 0.6, 0.01).name('turbulence scale');
+fw.add(P, 'turbSpeed', 0.05, 2, 0.01).name('turbulence speed');
+const fv = gui.addFolder('wavefronts');
+fv.add(P, 'waveSpeed', 0, 30, 0.1).name('speed m/s');
+fv.add(P, 'waveLength', 2, 60, 0.5).name('length m');
+fv.add(P, 'waveAngle', -90, 90, 1).name('angle °');
+fv.add(P, 'waveAmp', 0, 3, 0.01).name('amplitude');
+const fp = gui.addFolder('physics');
+fp.add(P, 'damping', 0.2, 6, 0.05);
+fp.add(P, 'maxAngle', 10, 90, 1).name('max angle °');
+fp.add(P, 'twist', 0, 1, 0.01).name('yaw flutter');
+fp.add(P, 'handRadius', 0.5, 8, 0.1).name('hand radius m');
+fp.add(P, 'handForce', 0, 60, 1).name('hand m/s');
+const ft = gui.addFolder('teardown');
+ft.add(P, 'explode', 0, 1, 0.01).name('explode all');
+ft.add(P, 'reassemble').name('put everything back');
+const fs = gui.addFolder('scene');
+fs.add(P, 'timeOfDay', 6, 20, 0.1).name('time of day').onChange(setSun);
+fs.add(P, 'exposure', 0.4, 2, 0.01).onChange(setSun);
+fs.add(P, 'shadows').onChange(v => { renderer.shadowMap.enabled = v; scene.traverse(o => { if (o.material) o.material.needsUpdate = true; }); });
+fs.add(P, 'freeze');
+const cams = { street: () => goCam('street'), drone: () => goCam('drone'), elevation: () => goCam('elevation'), close: () => goCam('close'), columns: () => goCam('columns') };
+const fcam = gui.addFolder('camera');
+for (const k in cams) fcam.add(cams, k);
+fk.close(); fc.close(); fv.close(); fp.close(); fs.close(); fcam.close();
+
+// ---------------------------------------------------------------------------
+// 11. Loop
+// ---------------------------------------------------------------------------
+const hudEl = document.getElementById('hud');
+let fps = 0, frames = 0, fpsT = performance.now();
+function hud() {
+  hudEl.innerHTML = `<b>${N.toLocaleString()}</b> keys · ${P.keyW} × ${P.keyH} m · ${rows} rows<br>` +
+    `wind <b>${P.wind.toFixed(1)} m/s</b> at ${P.direction}° · mode <b>${P.mode}</b><br>` +
+    `front 78.7 m · colonnade 49.5 m · attic 19 m · <b>${fps} fps</b>`;
+}
+setSun();
+buildSkin();
+
+let last = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  let dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!P.freeze) {
+    // substep for stability at high wind
+    const sub = 2, h = dt / sub;
+    for (let s = 0; s < sub; s++) { simTime += h; step(h); }
+    updateInstances();
+    for (let i = ripples.length - 1; i >= 0; i--) if (simTime - ripples[i].t0 > 9) ripples.splice(i, 1);
+    // flag follows the wind
+    if (flag) {
+      const pa = flag.geometry.attributes.position;
+      for (let i = 0; i < pa.count; i++) {
+        const x = pa.getX(i) + 1.1;
+        pa.setZ(i, Math.sin(x * 2.2 - simTime * (4 + P.wind * 0.4)) * 0.12 * x * (0.3 + P.wind / 20));
+      }
+      pa.needsUpdate = true; flag.geometry.computeVertexNormals();
+    }
+  }
+  if (camTween) {
+    camTween.t = Math.min(1, camTween.t + dt / 1.4);
+    const e = 1 - Math.pow(1 - camTween.t, 3);
+    camera.position.lerpVectors(camTween.from, camTween.to, e);
+    controls.target.lerpVectors(camTween.tf, camTween.tt, e);
+    if (camTween.t >= 1) camTween = null;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  frames++;
+  if (now - fpsT > 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; hud(); }
+}
+requestAnimationFrame(frame);
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palais Brongniart · 200 ans</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Azeret+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --blue: #1f3fff; --ink: #111; --mute: #8a8a8a; --line: #e6e6e6; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #fff; overflow: hidden; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; background: #fff; }
+  .slide { position: absolute; inset: 0; padding: 120px 140px 110px; display: none; }
+  .slide.on { display: block; }
+  .top, .bot { position: absolute; left: 140px; right: 140px; display: flex; justify-content: space-between;
+    font-family: "Azeret Mono", monospace; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+  .top { top: 56px; } .bot { bottom: 52px; }
+  .label { font-family: "Azeret Mono", monospace; font-size: 16px; letter-spacing: .14em; text-transform: uppercase; color: var(--blue); margin: 0 0 20px; }
+  h1 { font-size: 88px; font-weight: 500; letter-spacing: -.03em; line-height: 1.06; margin: 0; }
+  h2 { font-size: 56px; font-weight: 500; letter-spacing: -.022em; line-height: 1.14; margin: 0 0 44px; }
+  p { font-size: 28px; line-height: 1.42; margin: 0 0 20px; color: #333; max-width: 760px; }
+  .lead { font-size: 36px; line-height: 1.3; letter-spacing: -.012em; color: var(--ink); max-width: none; }
+  h1, h2, h3, .label, .l, .facts b { white-space: nowrap; }
+  .l { display: block; }
+  .slide.hero.on { display: flex; flex-direction: column; justify-content: center; padding-bottom: 170px; }
+  .hero h1 { font-size: 124px; letter-spacing: -.036em; line-height: 1; }
+  .hero .lead { font-size: 44px; margin-top: 40px; }
+  .hero .label { margin-bottom: 30px; }
+  .hero h2 { font-size: 60px; }
+  .divider .row { display: block !important; }
+  .divider .big, .divider h1 { display: inline-block; font-size: 176px; letter-spacing: -.04em; line-height: 1; }
+  .divider .big { margin-right: 44px; }
+  .divider p { font-size: 44px; line-height: 1.22; letter-spacing: -.012em; color: var(--ink); max-width: none; margin-top: 48px !important; }
+  .divider p.insp { font-size: 18px; letter-spacing: 0; color: var(--mute); margin-top: 44px !important; }
+  p, li, figcaption, td, .note { text-wrap: pretty; }
+  .steps li { text-wrap: balance; }
+  .row { display: grid; gap: 40px; }
+  .two { grid-template-columns: 1fr 1fr; }
+  .split { grid-template-columns: 640px 1fr; gap: 100px; align-items: start; }
+  .split img, .split svg { height: 620px !important; }
+  .bot span:first-child { visibility: hidden; } [data-live] .bot span:first-child { visibility: visible; }
+  figure { margin: 0; }
+  figure img { display: block; width: 100%; object-fit: cover; background: #f6f6f6; }
+  figure.contain img { object-fit: contain; background: #fff; }
+  figcaption { font-size: 18px; color: var(--mute); margin-top: 14px; line-height: 1.35; }
+  figcaption b { color: var(--ink); font-weight: 500; }
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--line); margin-top: 40px; }
+  .facts div { padding: 22px 0 0; }
+  .facts b { display: block; font-size: 44px; font-weight: 500; letter-spacing: -.02em; }
+  .facts span { font-family: "Azeret Mono", monospace; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+  #nav { position: fixed; right: 16px; bottom: 12px; font-family: "Azeret Mono", monospace; font-size: 11px; color: #bbb; }
+  .steps { margin: 0; padding: 0; list-style: none; counter-reset: s; }
+  .steps li { counter-increment: s; font-size: 28px; line-height: 1.42; color: #333; padding: 14px 0 14px 70px; border-top: 1px solid var(--line); position: relative; }
+  .steps li::before { content: counter(s, decimal-leading-zero); position: absolute; left: 0; top: 16px; font-family: "Azeret Mono", monospace; font-size: 18px; color: var(--blue); }
+  .steps b { color: var(--ink); font-weight: 600; }
+  .t { width: 100%; border-collapse: collapse; font-size: 22px; }
+  .t th { text-align: left; font-family: "Azeret Mono", monospace; font-weight: 400; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); padding: 0 20px 12px 0; border-bottom: 1px solid #111; }
+  .t td { padding: 14px 18px 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.35; color: #333; }
+  .t td:last-child { font-family: "Azeret Mono", monospace; font-size: 15px; color: var(--mute); }
+  .t b { color: var(--ink); font-weight: 500; }
+  .t tr.sum td { border-bottom: 1px solid #111; }
+  .t3 td, .t3 th { white-space: nowrap; } .t3 td:last-child { font-family: inherit; font-size: inherit; color: #333; }
+  .note { font-family: "Azeret Mono", monospace; font-size: 15px; color: var(--mute); margin-top: 22px; line-height: 1.5; max-width: 1500px; }
+  .links { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 0 18px; align-items: baseline; margin-top: 30px; font-family: "Azeret Mono", monospace; font-size: 16px; }
+  .links span { color: var(--mute); text-transform: uppercase; letter-spacing: .1em; font-size: 13px; }
+  .links a { color: var(--blue); text-decoration: none; border-bottom: 1px solid currentColor; justify-self: start; }
+  .divider .big { font-weight: 500; color: var(--blue); margin: 0 44px 0 0; }
+  .opt .n { font-size: 120px; font-weight: 500; color: var(--blue); line-height: 1; letter-spacing: -.04em; }
+  .opt h3, .h3 { font-size: 40px; font-weight: 500; letter-spacing: -.02em; margin: 18px 0 16px; }
+  .opt p { font-size: 24px; }
+  .insp { font-family: "Azeret Mono", monospace; font-size: 16px; line-height: 1.55; color: var(--mute); margin-top: 26px; }
+  .insp b { color: var(--blue); font-weight: 500; }
+  .board { background: #111; padding: 18px 28px; font-family: "Azeret Mono", monospace; font-size: 30px; letter-spacing: .08em; color: #f5f5f5; }
+  .board div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #2a2a2a; }
+  .board div:last-child { border-bottom: 0; }
+  .board i { font-style: normal; } .board .up { color: #3ccf6e; } .board .dn { color: #ff4a3d; }
+
+  .gf { padding: 80px; }
+  .gf .c, .gf figcaption { font-family: inherit; font-size: 18px; line-height: 1.35; color: #777; margin-top: 12px; letter-spacing: 0; }
+  .gf img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .gf .f { display: flex; flex-direction: column; min-height: 0; }
+  .gf .f > div { flex: 1; min-height: 0; }
+  .gf .grid { display: grid; gap: 28px; height: 920px; }
+  .gf .bottom { position: absolute; left: 80px; bottom: 80px; width: 1180px; }
+  .gf table { width: 100%; border-collapse: collapse; }
+  .gf td { font-size: 25px; padding: 15px 28px 15px 0; border-top: 1px solid #ddd; vertical-align: top; line-height: 1.35; }
+  .gf td:first-child { white-space: nowrap; } .gf td.g { color: #777; }
+  .gf .m td { font-size: 19px; padding: 9px 18px 9px 0; }
+  img[src*="facade_v4"], img[src*="interieur_bourse"] { object-fit: contain !important; background: #fff; }
+  .slide:not(.gf) figure img[src*="facade_v4"], .slide:not(.gf) figure img[src*="interieur_bourse"] { width: auto; max-width: 100%; height: auto !important; max-height: 620px; }
+  figure.contain img { object-position: left center; }
+  #tri { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 9; display: flex; gap: 8px; align-items: center; background: #fff; border: 1px solid #ccc; padding: 8px 10px; font: 14px Inter, system-ui, sans-serif; }
+  #tri button { font: inherit; padding: 8px 14px; background: #fff; border: 1px solid #bbb; cursor: pointer; color: #111; }
+  #tri button.a { background: #111; color: #fff; border-color: #111; }
+  #tri span { padding: 0 8px; color: #555; white-space: nowrap; }
+  body.show #tri { display: none; }
+</style>
+</head>
+<body class="show">
+<div id="stage">
+
+<!-- 1 · couverture -->
+<!-- 1 · couverture -->
+<section class="slide on">
+  <div class="top"><span>Palais Brongniart</span><span>1826 · 2026</span></div>
+  <div class="label">Projet · bicentenaire</div>
+  <h1>Palais Brongniart, 200 ans de vie</h1>
+  <figure style="margin-top:56px"><img src="img/palais_photo.jpg" style="height:640px;object-position:50% 46%" alt="Le palais Brongniart aujourd’hui"></figure>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- 2 · l'idée -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>L'idée</span></div>
+  <div class="label">L'idée</div>
+      <h2>Un lieu de Paris qui vit depuis 200 ans</h2>
+<div class="row split">
+    <div>
+      <p>Deux siècles de criée, de foule et de fêtes.</p>
+      <p>On veut montrer cette vie par le mouvement.</p>
+    </div>
+    <figure><img src="img/foule.jpg" style="height:700px" alt=""><figcaption><b>La foule devant la Bourse</b> · Agence Rol, Gallica / Wikimedia Commons, domaine public</figcaption></figure>
+  </div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- vie -->
+<section class="slide hero">
+  <div class="top"><span>Palais Brongniart</span><span>Le projet</span></div>
+  <div class="label">Le projet</div>
+  <h1>La vie, c'est du mouvement.</h1>
+  <p class="lead">Quand la façade bouge, le palais revit.</p>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- trois -->
+<!-- div1 -->
+<section class="slide divider hero">
+  <div class="top"><span>Palais Brongniart</span><span>Idée 1</span></div>
+  <div class="row" style="grid-template-columns:700px 1fr;gap:70px;align-items:start">
+    <div>
+      <div class="big">1</div>
+      <h1>Le Souffle</h1>
+      <p style="margin-top:34px"><span class="l">Il a 200 ans et il bouge encore.</span><span class="l">La criée s’est tue. Le vent rend sa voix au palais,</span><span class="l">et toute la façade se met à vivre.</span></p>
+      <p class="insp"><b>Inspiration</b> · Metaguise, Ned Kahn.</p>
+    </div>
+  </div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- 3 · la référence du mouvement -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Référence</span></div>
+  <div class="label">Le mouvement</div>
+      <h2>Des plaques qui battent au vent</h2>
+<div class="row split">
+    <div>
+      <p>Cascading Keys, Metaguise : des plaques d'alu pendues par le haut. Le vent les soulève en nappes.</p>
+
+    </div>
+    <div class="row two" style="gap:32px">
+      <figure><img src="img/ref_cascading_keys.jpg" style="height:760px" alt=""><figcaption><b>Cascading Keys</b> · Metaguise, image du reel</figcaption></figure>
+      <figure><img src="img/ref_cascading_keys_frame.jpg" style="height:760px" alt=""><figcaption><b>Cascading Keys</b> · cover</figcaption></figure>
+    </div>
+  </div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- 7 · inspirations construites -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Inspirations</span></div>
+  <div class="label">Ce qui existe déjà</div>
+  <h2>Des façades qui montrent le vent</h2>
+  <div class="row two">
+    <figure><img src="img/kahn_a.jpg" style="height:520px" alt=""><figcaption><b>Ned Kahn, Technorama</b> · Winterthur, plaques alu suspendues, le vent dessine des vagues</figcaption></figure>
+    <figure><img src="img/kahn_b.jpg" style="height:520px" alt=""><figcaption><b>Ned Kahn</b> · parking, des milliers de plaques qui bougent au vent</figcaption></figure>
+  </div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- autres -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Inspirations</span></div>
+  <div class="label">Pas seulement Ned Kahn</div>
+  <h2 style="margin-bottom:30px">Le geste existe partout, en produit</h2>
+  <div class="row" style="grid-template-columns:repeat(3,1fr);gap:28px 32px">
+    <figure><img src="img/r_extech.jpg" style="height:280px" alt=""><figcaption><b>Extech, KINETICWALL</b> · parking, USA</figcaption></figure>
+    <figure><img src="img/r_lf_stjames.jpg" style="height:280px" alt=""><figcaption><b>Lang+Fulton, STEREO-KINETIC</b> · St James Quarter, Édimbourg, entre les piliers</figcaption></figure>
+    <figure><img src="img/r_morongo.jpg" style="height:280px" alt=""><figcaption><b>Lifescapes, Extech, MediaWorks</b> · Morongo Casino, Californie, plaques et LED la nuit</figcaption></figure>
+    <figure><img src="img/r_lf_olympia.jpg" style="height:280px" alt=""><figcaption><b>Lang+Fulton, STEREO-KINETIC</b> · Olympia car park, Dundee</figcaption></figure>
+    <figure><img src="img/r_jakob.jpg" style="height:280px" alt=""><figcaption><b>Jakob, Windwave</b> · maille inox à disques, Suisse</figcaption></figure>
+    <figure><img src="img/r_kriska.jpg" style="height:280px" alt=""><figcaption><b>Kriskadecor</b> · rideau de chaînes alu, Milan 2022</figcaption></figure>
+  </div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- 8 · inspirations simulation -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Inspirations</span></div>
+  <div class="label">Comment on le simule</div>
+  <h2>Le vent passé en motif</h2>
+  <div class="row two">
+    <figure><img src="img/iaac.jpg" style="height:520px;object-position:top" alt=""><figcaption><b>IaaC, Ned Kahn Wind Pattern</b> · façade animée, projet étudiant Grasshopper · iaacblog.com</figcaption></figure>
+    <figure><img src="img/mcneel.jpg" style="height:520px;object-position:top" alt=""><figcaption><b>McNeel, façade de carreaux animée au vent</b> · discourse.mcneel.com</figcaption></figure>
+  </div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- 4 · comment c'est tenu -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
+  <div class="label">Technique A</div>
+  <h2>Une plaque, une tige, un rail</h2>
+  <figure class="contain"><img src="img/dessins/eclate_souffle.svg" style="height:600px" alt=""><figcaption><b>Éclaté d'un cadre</b> · la pose en trois temps, puis la plaque sur sa tige</figcaption></figure>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="ta2">
+  <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
+  <div class="label">Technique A · la fixation</div>
+  <h2>Serré entre deux colonnes</h2>
+  <figure class="contain"><img src="img/dessins/serrage_souffle.svg" style="height:600px" alt=""><figcaption><b>Le serrage</b> · trois étrésillons par travée, des patins au sol, aucun perçage</figcaption></figure>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="tb1">
+  <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
+  <div class="label">Technique B</div>
+  <h2>Une dalle, une grille, des sangles</h2>
+  <figure class="contain"><img src="img/dessins/eclate_b_souffle.svg" style="height:600px" alt=""><figcaption><b>Éclaté d’une travée</b> · la pose en trois temps, puis la dalle sur sa grille</figcaption></figure>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="tb2">
+  <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
+  <div class="label">Technique B · la fixation</div>
+  <h2>Tendu entre deux colonnes</h2>
+  <figure class="contain"><img src="img/dessins/sangle_souffle.svg" style="height:600px" alt=""><figcaption><b>Les sangles</b> · quatre par colonne, serrées sur un feutre, aucun perçage</figcaption></figure>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- 5 · le dessin -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Le dessin</span></div>
+  <div class="label">Le palais coté</div>
+  <h2>Tout se joue entre les 14 colonnes</h2>
+  <figure class="contain"><img src="img/dessins/elevation_souffle.svg" style="height:500px" alt=""><figcaption><b>Élévation cotée</b> · 13 cadres de plaques entre les 14 colonnes</figcaption></figure>
+  <div class="facts">
+    <div><b>78,7 m</b><span>façade, ailes comprises</span></div>
+    <div><b>49,5 m</b><span>colonnade</span></div>
+    <div><b>14</b><span>colonnes, tous les 3,56 m</span></div>
+    <div><b>11,8 m</b><span>hauteur d'une colonne</span></div>
+  </div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- 6 · le modèle -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Le modèle</span></div>
+  <div class="label">Le modèle 3D</div>
+  <h2>Un rideau de plaques derrière les colonnes</h2>
+  <div class="row two">
+    <figure><img src="img/preview_columns_street.jpg" style="height:480px" alt=""><figcaption><b>Derrière les colonnes</b> · vue de la rue</figcaption></figure>
+    <figure><img src="img/preview_columns_close.jpg" style="height:480px" alt=""><figcaption><b>Derrière les colonnes</b> · le long de la colonnade</figcaption></figure>
+  </div>
+  <div class="facts" style="margin-top:34px">
+    <div><b>2 002</b><span>plaques</span></div>
+    <div><b>0,30 × 0,42 m</b><span>une plaque</span></div>
+    <div><b>22</b><span>rangées</span></div>
+    <div><b>vent réel</b><span>chaque plaque a son poids</span></div>
+  </div>
+  <div class="links"><span>Le modèle en ligne</span><a href="https://raouf-hamouda.github.io/bourse-cascading-keys/" target="_blank">raouf-hamouda.github.io/bourse-cascading-keys</a><span>Code</span><a href="https://github.com/Raouf-Hamouda/bourse-cascading-keys" target="_blank">github.com/Raouf-Hamouda/bourse-cascading-keys</a></div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- live -->
+<section class="slide" data-live>
+  <div class="top"><span>Palais Brongniart</span><span>Le modèle</span></div>
+  <div class="label">Le modèle en direct</div>
+  <iframe id="viewer" data-src="viewer.html?v=3" title="Modèle 3D" style="position:absolute;left:140px;top:200px;width:1640px;height:760px;border:1px solid var(--line)"></iframe>
+  <div class="bot"><span>Souris : tourner · molette : zoom · clic sur le mur : onde · 1 à 5 : caméras · clic hors du cadre pour reprendre les flèches</span><span class="pg"></span></div>
+</section>
+
+<section class="slide gf" data-name="nuit" style="padding:0"><img src="img/souffle_nuit.jpg" alt="Le Souffle éclairé, de nuit" style="height:968px;object-position:50% 58%"><figcaption style="position:absolute;left:140px;bottom:42px;margin:0;font-size:18px;color:#8a8a8a"><b style="color:#111;font-weight:500">Visuel de principe</b> · le Souffle éclairé, de nuit</figcaption></section>
+
+<section class="slide" data-name="d1">
+  <div class="top"><span>Palais Brongniart</span><span>Ouverture</span></div>
+  <div class="label">Le soir de l’ouverture</div>
+  <h2>Les drones lèvent le premier vent</h2>
+  <iframe data-src="drones.html?show=souffle&amp;ui=0" title="Spectacle de drones" style="position:absolute;left:140px;top:290px;width:1640px;height:650px;border:0"></iframe>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="soft">
+<div class="top"><span>Palais Brongniart</span><span>Ouverture</span></div><div class="label">Le logiciel</div><h2>La chorégraphie est déjà écrite</h2>
+<div class="row split" style="grid-template-columns:700px 1fr;gap:80px"><div>
+<ol class="steps"><li><b>Le palais en 3D</b>, aux cotes de l’élévation.</li><li><b>Six tableaux</b> par idée, de 1826 à 2026.</li><li><b>1 200 drones</b>, une trajectoire chacun.</li><li><b>Écart et vitesse</b> vérifiés à chaque tableau.</li><li><b>Trajectoires exportées</b> pour l’opérateur.</li><li><b>Écrit avec Claude Code</b>, comme le modèle et les dessins.</li></ol></div>
+<figure><iframe data-src="drones.html?show=bulle" title="Logiciel de chorégraphie" style="width:100%;height:600px;border:1px solid var(--line);display:block"></iframe><figcaption><b>Le logiciel</b> · lecture, choix du spectacle, contrôles, export des trajectoires</figcaption></figure></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+
+
+<!-- pose -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>La pose</span></div>
+  <div class="label">La pose entre les colonnes</div>
+      <h2>Rien ne touche la pierre</h2>
+<div class="row split" style="grid-template-columns:760px 1fr">
+    <div>
+      <ol class="steps">
+        <li><b>Zéro perçage</b> dans la pierre.</li>
+        <li><b>13 cadres acier</b> derrière les colonnes, calés par vérins.</li>
+        <li><b>22 tiges</b> par cadre, tous les 0,54 m.</li>
+        <li><b>Plaques clipsées</b> par le haut, libres au vent.</li>
+        <li><b>2 semaines</b> de pose de nuit.</li>
+        <li><b>Démontage</b> sans trace.</li>
+      </ol>
+    </div>
+    <figure class="contain"><img src="img/dessins/coupe_souffle.svg" style="height:672px !important" alt=""><figcaption><b>Coupe de principe</b> · le vent traverse la colonnade</figcaption></figure>
+  </div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- fiche -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Fiche technique</span></div>
+  <div class="label">Fiche technique et prix</div>
+  <h2 style="margin-bottom:30px">Deux façons de le construire</h2>
+  <div class="row two" style="gap:80px;align-items:start">
+    <div>
+      <figure class="contain"><img src="img/dessins/tech_a.svg" style="height:190px" alt=""></figure>
+      <h3 class="h3">A · Plaques sur tiges</h3>
+      <table class="t t3">
+        <tr><th>poste</th><th>prix trouvé</th><th>pour le projet</th></tr>
+        <tr><td>Tôle alu 2 mm</td><td>53 €/m²</td><td><b>≈ 16 k€</b></td></tr>
+        <tr><td>Laquage 1 face</td><td>dès 10 €/m²</td><td><b>≈ 3 k€</b></td></tr>
+        <tr><td>Nacelle</td><td>dès 200 €/jour</td><td><b>≈ 4 k€</b></td></tr>
+        <tr><td>Cadres, découpe, tiges, pose</td><td></td><td><b>sur devis</b></td></tr>
+        <tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 23 k€</b> + devis</td></tr>
+      </table>
+    </div>
+    <div>
+      <figure class="contain"><img src="img/dessins/tech_b.svg" style="height:190px" alt=""></figure>
+      <h3 class="h3">B · Panneaux à paillettes</h3>
+      <table class="t t3">
+        <tr><th>poste</th><th>prix trouvé</th><th>pour le projet</th></tr>
+        <tr><td>Dalles de 30 cm, 4 446 pièces</td><td>dès 1,2 $ la dalle</td><td><b>≈ 6 k€</b></td></tr>
+        <tr><td>Nacelle</td><td>dès 200 €/jour</td><td><b>≈ 4 k€</b></td></tr>
+        <tr><td>Support, pose, classement feu</td><td></td><td><b>sur devis</b></td></tr>
+        <tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 10 k€</b> + devis</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="note">Prix publics relevés le 9 nov 2026 (Hellopro, annonces de gros), pas des devis. 2 002 plaques ou 400 m² de dalles, entre les 14 colonnes.</div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<!-- vendeurs -->
+<section class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Qui le vend</span></div>
+  <div class="label">Qui le vend vraiment</div>
+  <h2 style="margin-bottom:28px">Six fabricants, tous sur devis</h2>
+  <table class="t">
+    <tr><th>fabricant</th><th>produit</th><th>pays</th><th>déjà fait</th></tr>
+    <tr><td><b>Extech</b> Exterior Technologies</td><td>KINETICWALL, plaques alu sur barreaux</td><td>Pittsburgh, USA</td><td>Logan Airport, Boston (≈ 48 000 plaques) · Hawkeye, Iowa (7 560)</td></tr>
+    <tr><td><b>Metaguise</b></td><td>Cascading Keys, notre référence</td><td>Inde</td><td>gamme de bardage 2026</td></tr>
+    <tr><td><b>Lang+Fulton</b></td><td>STEREO-KINETIC Wall, inox, panneaux jusqu'à 3 000 × 1 870 mm</td><td>Édimbourg, UK</td><td>Olympia car park, Dundee · sales@langandfulton.co.uk</td></tr>
+    <tr><td><b>UAP</b> avec Ned Kahn</td><td>plaques alu suspendues</td><td>Australie</td><td>parking de l'aéroport de Brisbane (≈ 118 000 plaques)</td></tr>
+    <tr><td><b>Kriskadecor</b></td><td>rideau de chaînes alu, ≈ 2 kg/m², rails fournis</td><td>Espagne</td><td>bardages extérieurs</td></tr>
+    <tr><td><b>Jakob</b></td><td>Windwave, maille inox à disques</td><td>Suisse</td><td></td></tr>
+  </table>
+  <div class="note">Aucun ne publie de prix. Le geste est libre, les fixations Extech sont brevetées aux USA.</div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide gf" style="padding:0" data-name="opt3_v3_hasard"><img src="img/gf/c_opt3_v3_hasard.jpg" alt="opt3_v3_hasard" style="object-fit:contain"></section>
+
+<section class="slide divider hero" data-name="b0">
+<div class="top"><span>Palais Brongniart</span><span>Idée 2</span></div><div class="row" style="grid-template-columns:700px 1fr;gap:70px;align-items:start"><div>
+<div class="big">2</div><h1>La Bulle</h1>
+<p style="margin-top:34px"><span class="l">200 ans qu’il se remplit.</span><span class="l">Il fallait bien que ça sorte.</span></p>
+<p class="insp"><b>Inspiration</b> · Steve Messam, Penique Productions.</p></div></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="b1">
+<div class="top"><span>Palais Brongniart</span><span>Référence</span></div><div class="label">Le geste</div><h2>Le palais déborde</h2>
+<div class="row split" style="grid-template-columns:640px 1fr;gap:80px"><div><p class="lead"><span class="l">Deux siècles de foule,</span><span class="l">ça ne se garde pas à l’intérieur.</span></p></div>
+<div class="row two"><figure><img src="img/gf/messam.jpg" style="height:700px" alt=""><figcaption><b>Steve Messam</b> · membrane gonflée dans un temple</figcaption></figure><figure><img src="img/gf/canopy.jpg" style="height:700px" alt=""><figcaption><b>Steve Messam, Canopy</b> · Timișoara, 2023</figcaption></figure></div></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="b2">
+<div class="top"><span>Palais Brongniart</span><span>Inspirations</span></div><div class="label">Ce qui existe déjà</div><h2>Des bâtiments qui se gonflent</h2><div class="row two">
+<figure><img src="img/gf/oase.jpg" style="height:520px" alt=""><figcaption><b>Haus-Rucker-Co, Oase Nr. 7</b> · une bulle sur la façade du Fridericianum, Cassel, 1972</figcaption></figure>
+<figure><img src="img/gf/bilbao.jpg" style="height:520px" alt=""><figcaption><b>Martillo Neumático, Cuerpo gris</b> · un cloître du XVIe siècle, Bilbao</figcaption></figure></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="b3">
+<div class="top"><span>Palais Brongniart</span><span>Inspirations</span></div><div class="label">Pas seulement Messam</div><h2>Paris connaît déjà ce geste</h2><div class="row" style="grid-template-columns:repeat(3,1fr)">
+<figure><img src="img/gf/pivi.jpg" style="height:480px" alt=""><figcaption><b>Paola Pivi</b> · échelle gonflable de 20 m contre le Grand Palais, 2025</figcaption></figure>
+<figure><img src="img/gf/tree.jpg" style="height:480px" alt=""><figcaption><b>Paul McCarthy, Tree</b> · 24 m, place Vendôme, 2014</figcaption></figure>
+<figure><img src="img/gf/matria.jpg" style="height:480px" alt=""><figcaption><b>Penique, MATRIA</b> · Royal Exhibition Building, Melbourne, 2025</figcaption></figure></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="b4">
+<div class="top"><span>Palais Brongniart</span><span>Le dessin</span></div><div class="label">Le palais coté</div><h2>Une bulle entre chaque colonne</h2>
+<figure class="contain"><img src="img/dessins/elevation_bulle.svg" style="height:500px" alt=""><figcaption><b>Élévation cotée</b> · 13 volumes entre les 14 colonnes</figcaption></figure>
+<div class="facts"><div><b>13</b><span>volumes gonflés</span></div><div><b>49,5 m</b><span>colonnade</span></div><div><b>14</b><span>colonnes, tous les 3,56 m</span></div><div><b>11,8 m</b><span>hauteur d’une colonne</span></div></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="b5">
+<div class="top"><span>Palais Brongniart</span><span>Détails</span></div><div class="label">Comment c’est tenu</div><h2>Une membrane, une soufflerie, du lest</h2>
+<div class="row split" style="grid-template-columns:760px 1fr"><div><ol class="steps"><li><b>Une membrane</b> par entrecolonnement.</li><li><b>Une soufflerie</b> par volume, l’air tourne en continu.</li><li><b>Du lest</b> au sol, dans la galerie.</li><li><b>Un seuil de vent</b> : au-delà, les volumes se couchent.</li></ol></div>
+<figure class="contain"><img src="img/dessins/detail_bulle.svg" style="height:672px !important" alt=""><figcaption><b>Détail</b> · un entrecolonnement</figcaption></figure></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="b7">
+<div class="top"><span>Palais Brongniart</span><span>La pose</span></div><div class="label">La pose entre les colonnes</div><h2>Rien ne touche la pierre</h2>
+<div class="row split" style="grid-template-columns:760px 1fr"><div><ol class="steps"><li><b>Zéro perçage</b> dans la pierre.</li><li><b>Structure autoportante</b> derrière les colonnes, tenue par du lest.</li><li><b>Chaque contact</b> avec la pierre est protégé.</li><li><b>Gonflage</b> volume par volume.</li><li><b>Démontage</b> sans trace.</li></ol></div>
+<figure class="contain"><img src="img/dessins/coupe_bulle.svg" style="height:672px !important" alt=""><figcaption><b>Coupe de principe</b> · de la place à la grande salle</figcaption></figure></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="b9">
+<div class="top"><span>Palais Brongniart</span><span>Option</span></div><div class="label">Option · de l’intérieur</div><h2>Tout le monde dans la bulle</h2>
+<div class="row split" style="grid-template-columns:760px 1fr;gap:90px"><div><p>Une membrane gonflée remplit la grande salle et épouse les murs. On entre dedans.</p></div><figure class="contain"><img src="img/gf/interieur_bourse.jpg" style="height:800px" alt=""><figcaption><b>Visuel de principe</b> · grande salle du palais</figcaption></figure></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="b10">
+<div class="top"><span>Palais Brongniart</span><span>Fiche technique</span></div><div class="label">Fiche technique et prix</div><h2 style="margin-bottom:28px">13 volumes · environ 1 500 m² de membrane</h2>
+<table class="t"><tr><th>poste</th><th>prix réel trouvé</th><th>pour le projet</th><th>source</th></tr>
+<tr><td>Toile PVC 600 g/m²</td><td>10 à 20 €/m²</td><td><b>≈ 15 à 30 k€</b></td><td>Hellopro</td></tr>
+<tr><td>Souffleries, 13 unités</td><td>dès 99 €</td><td><b>≈ 1,3 k€</b></td><td>Destockplus</td></tr>
+<tr><td>Nacelle, pas d’échafaudage</td><td>dès 200 €/jour</td><td>2 × 10 j ≈ <b>4 k€</b></td><td>Hellopro</td></tr>
+<tr><td>Confection, structure lestée, étude vent, pose</td><td></td><td><b>sur devis</b></td><td></td></tr>
+<tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 20 à 35 k€</b> + devis</td><td></td></tr></table>
+<div class="note">Prix publics relevés le 9 nov 2026, pas des devis. Surface estimée d’après les cotes de l’élévation.</div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide gf" data-name="gf2">
+  <div class="grid" style="grid-template-columns:1.25fr 1fr;gap:60px">
+    <table class="m" style="align-self:start"><tr><td>Landmark Creations<br><a href="https://www.landmarkcreations.com/inflatable-products-gallery/inflatables-by-market-segment/category/inflatables-for-artists" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">landmarkcreations.com</a></td><td class="g">Toute une gamme « gonflables pour artistes », dont un dans une entrée du Guggenheim</td></tr><tr><td>Bigger Than Life<br><a href="https://hyperallergic.com/the-bigger-than-life-team-behind-paul-mccarthys-inflammatory-inflatables" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">hyperallergic.com</a></td><td class="g">Travaille depuis plus de 15 ans avec Paul McCarthy sur ses gonflables géants</td></tr><tr><td>Designs in Air<br><a href="https://www.designsinair.com/" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">designsinair.com</a></td><td class="g">Connu pour ses sculptures gonflables audacieuses, dont des œuvres urbaines conçues pour leur site</td></tr><tr><td>Glow Inflatables<br><a href="https://www.glowinflatables.com/inflatable-art" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">glowinflatables.com</a></td><td class="g">Part du concept de l’artiste et conseille sur les matériaux</td></tr><tr><td>Studio Soüfflé<br><a href="https://studiosouffle.com/" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">studiosouffle.com</a></td><td class="g">Gonflables sur mesure pour l’événementiel, a travaillé dans toute l’Europe</td></tr><tr><td>Airstar<br><a href="https://www.airstar-light.com/" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">airstar-light.com</a></td><td class="g">Enveloppes en tissu sur mesure pour ballons éclairants, utilisées sur des tournages comme Titanic</td></tr><tr><td>C2J<br><a href="https://conseils.hellopro.fr/top-10-des-fabricants-de-structures-et-jeux-gonflables-3934.html" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">hellopro.fr</a></td><td class="g">Français, environ 40 ans dans le gonflable publicitaire</td></tr><tr><td>Mobyland<br><a href="https://conseils.hellopro.fr/top-10-des-fabricants-de-structures-et-jeux-gonflables-3934.html" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">hellopro.fr</a></td><td class="g">Gonflables sur mesure</td></tr><tr><td>Evenia<br><a href="https://www.evenia.fr/" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">evenia.fr</a></td><td class="g">Gonflables sur mesure et événements clés en main</td></tr><tr><td>Airsystems France<br><a href="https://airsystemsfrance.fr/" target="_blank" onclick="event.stopPropagation()" style="color:#777;font-size:15px">airsystemsfrance.fr</a></td><td class="g">Gonflables sur mesure pour l’événementiel et la publicité</td></tr></table>
+    <div class="grid" style="grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:14px"><figure class="f"><div><img src="img/gf/m_btl_3.jpg" alt="Bigger Than Life"></div><figcaption class="c" style="margin-top:6px;font-size:15px">Bigger Than Life</figcaption></figure><figure class="f"><div><img src="img/gf/m_btl_4.jpg" alt="Bigger Than Life"></div><figcaption class="c" style="margin-top:6px;font-size:15px">Bigger Than Life</figcaption></figure><figure class="f"><div><img src="img/gf/m_designsinair_3.jpg" alt="Designs in Air"></div><figcaption class="c" style="margin-top:6px;font-size:15px">Designs in Air</figcaption></figure><figure class="f"><div><img src="img/gf/m_glow_5.jpg" alt="Glow Inflatables"></div><figcaption class="c" style="margin-top:6px;font-size:15px">Glow Inflatables</figcaption></figure><figure class="f"><div><img src="img/gf/m_souffle_4.jpg" alt="Studio Soüfflé"></div><figcaption class="c" style="margin-top:6px;font-size:15px">Studio Soüfflé</figcaption></figure><figure class="f"><div><img src="img/gf/m_souffle_1.jpg" alt="Studio Soüfflé"></div><figcaption class="c" style="margin-top:6px;font-size:15px">Studio Soüfflé</figcaption></figure></div>
+  </div>
+</section>
+
+<section class="slide hero" data-name="gf3">
+  <h2><span class="l">Le palais a 200 ans.</span><span class="l">Il est vivant, il respire et il change avec le temps.</span></h2>
+  <h2 style="margin-top:80px"><span class="l">On oppose 200 ans de pierre à de l’air,</span><span class="l">sur le seul bâtiment de Paris où ça veut dire quelque chose.</span></h2>
+</section>
+
+<section class="slide gf" data-name="gf4" style="padding:0"><img src="img/gf/facade_v4.jpg" alt="Une bulle géante déborde entre les colonnes du palais" style="height:880px;object-fit:cover !important"><h2 style="position:absolute;left:140px;bottom:68px;margin:0">Trop de fêtes pour quatre murs.</h2></section>
+
+<section class="slide gf" data-name="gf5">
+  <div class="grid" style="grid-template-columns:1fr 660px;gap:28px">
+    <figure class="f"><div><img src="img/gf/facade_v4.jpg" alt="La bulle vue de l’extérieur"></div><figcaption class="c" style="font-size:24px">Option : dehors, on regarde la bulle. Dedans, on y est.</figcaption></figure>
+    <figure class="f"><div><img src="img/gf/interieur_bourse.jpg" alt="La bulle vue de l’intérieur"></div></figure>
+  </div>
+</section>
+
+
+<section class="slide" data-name="d2">
+  <div class="top"><span>Palais Brongniart</span><span>Ouverture</span></div>
+  <div class="label">Le soir de l’ouverture</div>
+  <h2>Les drones gonflent la première bulle</h2>
+  <iframe data-src="drones.html?show=bulle&amp;ui=0" title="Spectacle de drones" style="position:absolute;left:140px;top:290px;width:1640px;height:650px;border:0"></iframe>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide divider hero" data-name="j0">
+<div class="top"><span>Palais Brongniart</span><span>Idée 3</span></div><div class="row" style="grid-template-columns:700px 1fr;gap:70px;align-items:start"><div>
+<div class="big">3</div><h1>Le Jardin</h1>
+<p style="margin-top:34px"><span class="l">Un jardin sort d’entre les colonnes.</span><span class="l">Des fleurs hautes comme le palais.</span></p>
+<p class="insp"><b>Inspiration</b> · Bigger Than Life, Designs in Air.</p></div></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="j1">
+<div class="top"><span>Palais Brongniart</span><span>Inspirations</span></div><div class="label">Ce qui existe déjà</div><h2>Des gonflables qui poussent sur les bâtiments</h2><div class="row two">
+<figure><img src="img/gf/m_btl_3.jpg" style="height:520px" alt=""><figcaption><b>Bigger Than Life</b> · des fleurs géantes sur une colonnade</figcaption></figure>
+<figure><img src="img/gf/m_designsinair_3.jpg" style="height:520px" alt=""><figcaption><b>Designs in Air</b> · des tentacules qui sortent d’un immeuble</figcaption></figure></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide hero" data-name="j2">
+  <h2><span class="l">Le petit-fils de l’architecte était botaniste.</span></h2>
+  <h2 style="margin-top:80px"><span class="l">En décembre, quand plus rien ne fleurit à Paris,</span><span class="l">son palais fleurit.</span></h2>
+</section>
+
+<section class="slide" data-name="j3">
+  <div class="top"><span>Palais Brongniart</span><span>Le dessin</span></div>
+  <div class="label">Le palais coté</div>
+  <h2>Des tiges entre les colonnes</h2>
+  <figure class="contain"><img src="img/dessins/elevation_jardin.svg" style="height:500px" alt=""><figcaption><b>Élévation cotée</b> · huit tiges, des roses de Noël, du houx</figcaption></figure>
+  <div class="facts"><div><b>8</b><span>tiges gonflées</span></div><div><b>49,5 m</b><span>colonnade</span></div><div><b>14</b><span>colonnes, tous les 3,56 m</span></div><div><b>11,8 m</b><span>hauteur d’une colonne</span></div></div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+
+<section class="slide" data-name="j5">
+  <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
+  <div class="label">Comment c’est fait</div>
+  <h2>Une tige, une fleur, un pied</h2>
+  <figure class="contain"><img src="img/dessins/detail_jardin.svg" style="height:600px" alt=""><figcaption><b>Détail</b> · une peau cousue, des pétales-coussins, un pied lesté</figcaption></figure>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="j6">
+  <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
+  <div class="label">Les haubans</div>
+  <h2>Chaque tige est tenue en trois points</h2>
+  <figure class="contain"><img src="img/dessins/haubans_jardin.svg" style="height:600px" alt=""><figcaption><b>Les accroches</b> · sur la tige, sur une sangle de colonne, sur un lest en toiture</figcaption></figure>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="j7">
+  <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
+  <div class="label">Les haubans</div>
+  <h2 style="margin-bottom:30px">Quarante-quatre haubans, moins de cent mètres de corde</h2>
+  <table class="t t3">
+    <tr><th>tige</th><th>haubans</th><th>sur les colonnes</th><th>sur le toit</th><th>sur les marches</th><th>longueur</th></tr>
+<tr><td><b>Tige 1</b></td><td>6</td><td>0,6 · 1,6 · 1,0 · 1,2 m</td><td>2 × 5,7 m</td><td>—</td><td>15,8 m</td></tr>
+<tr><td><b>Tige 2</b></td><td>6</td><td>0,6 · 1,4 · 0,8 · 1,5 m</td><td>2 × 5,7 m</td><td>—</td><td>15,7 m</td></tr>
+<tr><td><b>Tige 3</b></td><td>6</td><td>—</td><td>—</td><td>6 × 1,2 m</td><td>7,2 m</td></tr>
+<tr><td><b>Tige 4</b></td><td>6</td><td>0,6 · 1,5 · 0,8 · 1,5 m</td><td>2 × 5,7 m</td><td>—</td><td>15,8 m</td></tr>
+<tr><td><b>Tige 5</b></td><td>2</td><td>0,6 · 1,7 m</td><td>—</td><td>—</td><td>2,3 m</td></tr>
+<tr><td><b>Tige 6</b></td><td>6</td><td>0,6 · 1,5 · 0,7 · 1,6 m</td><td>2 × 5,7 m</td><td>—</td><td>15,8 m</td></tr>
+<tr><td><b>Tige 7</b></td><td>6</td><td>—</td><td>—</td><td>6 × 1,2 m</td><td>7,2 m</td></tr>
+<tr><td><b>Tige 8</b></td><td>6</td><td>0,6 · 1,6 · 1,0 · 1,2 m</td><td>2 × 5,7 m</td><td>—</td><td>15,8 m</td></tr>
+<tr class="sum"><td>Total</td><td><b>44</b> haubans</td><td><b>21</b> sangles</td><td><b>10</b> lests</td><td><b>12</b> lests</td><td><b>95,6 m</b></td></tr>
+  </table>
+  <div class="note">Longueurs utiles tirées du modèle du palais, à un mètre de réglage près par hauban.</div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="j8">
+<div class="top"><span>Palais Brongniart</span><span>La pose</span></div><div class="label">La pose entre les colonnes</div><h2>Rien ne touche la pierre</h2>
+<div class="row split" style="grid-template-columns:760px 1fr"><div>
+<ol class="steps"><li><b>Zéro perçage</b> dans la pierre.</li><li><b>Tiges lestées</b> au sol de la galerie.</li><li><b>Sangles sur feutre</b> autour des colonnes.</li><li><b>Lests en toiture</b>, derrière l’acrotère.</li><li><b>Démontage</b> sans trace.</li></ol></div>
+<figure class="contain"><img src="img/dessins/coupe_jardin.svg" style="height:672px !important" alt=""><figcaption><b>Coupe de principe</b> · de la place à la grande salle</figcaption></figure></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="j9">
+  <div class="top"><span>Palais Brongniart</span><span>Ouverture</span></div>
+  <div class="label">Le soir de l’ouverture</div>
+  <h2>Les drones plantent la première graine</h2>
+  <iframe data-src="drones.html?show=jardin&amp;ui=0" title="Spectacle de drones" style="position:absolute;left:140px;top:290px;width:1640px;height:650px;border:0"></iframe>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="j10">
+<div class="top"><span>Palais Brongniart</span><span>Deux options</span></div><div class="label">Deux options</div><h2>Entre les colonnes, ou jusqu’au toit</h2><div class="row two">
+<figure><img src="img/jardin/jardin_v8_bas.jpg" style="height:auto" alt=""><figcaption><b>Option 1</b> · tout reste sous l’entablement</figcaption></figure>
+<figure><img src="img/jardin/jardin_v7_moyen.jpg" style="height:auto" alt=""><figcaption><b>Option 2</b> · les fleurs montent jusqu’au toit</figcaption></figure></div>
+<div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide gf" data-name="j11" style="padding:0"><img src="img/jardin/jardin_v7_moyen.jpg" alt="Le jardin en fleurs" style="height:880px"><h2 style="position:absolute;left:140px;bottom:68px;margin:0">En décembre, le palais fleurit.</h2></section>
+
+</div>
+<div id="nav">← →</div>
+<div id="tri"><span id="ti"></span><button id="bk">Garder</button><button id="bx">Supprimer</button><span id="ct"></span><button id="bu">Annuler</button><button id="bl" title="Avancer la slide dans l’ordre">Avant</button><button id="br" title="Reculer la slide dans l’ordre">Après</button><button id="bm" title="Modifier les textes de la slide">Modifier</button><button id="be" title="Télécharger la présentation finale">Exporter</button><button id="bp">Présenter</button></div>
+<script>
+document.querySelectorAll('.slide').forEach((s,i)=>{ const n=String(i+1).padStart(2,'0'); s.querySelectorAll('.pg').forEach(e=>e.textContent=n);
+  const l=s.querySelector('.label'); if(i>0&&l) l.textContent=String(i).padStart(2,'0')+' · '+l.textContent; });
+const g=document.getElementById('rows'); if(g){ let h=''; for(let r=0;r<22;r++){ const y=104+r*27.4; h+=`<line x1="150" y1="${y}" x2="450" y2="${y}" stroke-width="1.5"/>`;
+  for(let c=0;c<6;c++){ const x=158+c*48.5, a=Math.sin(r*.7+c*1.3)*6; h+=`<path d="M${x} ${y} l${36} 0 l${a} 22 l-36 0 z" stroke-width="1" fill="#eef1ff"/>`; } } g.innerHTML=h; }
+const slides = [...document.querySelectorAll('.slide')]; let cur = 0;
+const KEY='brongniart_tri_web';let st={};try{st=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+slides.forEach((s,i)=>{if(!s.dataset.name)s.dataset.name='s'+i});const idOf=i=>slides[i].dataset.name;const present=()=>document.body.classList.contains('show');
+const live=i=>st[idOf(i)]!=='x';
+function paint(){const v=st[idOf(cur)];bk.classList.toggle('a',v==='k');bx.classList.toggle('a',v==='x');
+  ti.textContent='Slide '+(cur+1)+' · reste '+slides.filter((s,i)=>live(i)).length;const a=Object.values(st);ct.textContent=a.filter(x=>x==='k').length+' gardées, '+a.filter(x=>x==='x').length+' supprimées';}
+function go(n,d){d=d||(n>=cur?1:-1);let t=Math.max(0,Math.min(slides.length-1,n));while(!live(t)&&t+d>=0&&t+d<slides.length)t+=d;if(!live(t))return;cur=t;
+  slides.forEach((s,i)=>s.classList.toggle('on',i===cur));const f=slides[cur].querySelector('iframe[data-src]');if(f&&!f.src)f.src=f.dataset.src;paint();}
+function mark(v){const k=idOf(cur),was=cur;st[k]=st[k]===v?undefined:v;if(!st[k])delete st[k];if(v==='x'&&st[k]){(st._u=st._u||[]).push(k);}save();
+  let t=was+1;while(t<slides.length&&!live(t))t++;if(t<slides.length)go(t,1);else go(was-1,-1);paint();}
+bu.onclick=e=>{e.stopPropagation();const k=(st._u||[]).pop();if(!k)return;delete st[k];save();const i=slides.findIndex((s,j)=>idOf(j)===k);if(i>=0)go(i,1);paint();};
+bk.onclick=e=>{e.stopPropagation();mark('k')};bx.onclick=e=>{e.stopPropagation();mark('x')};bp.onclick=e=>{e.stopPropagation();document.body.classList.add('show');go(0,1)};
+addEventListener('keydown',e=>{if(e.target.isContentEditable)return;if(e.key==='Escape'){document.body.classList.remove('show');paint()}
+  if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key))go(cur+1,1);if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key))go(cur-1,-1);});
+addEventListener('click',e=>{if(e.target.closest('a')||e.target.closest('#tri')||document.body.classList.contains('edit'))return;e.clientX>innerWidth/2?go(cur+1,1):go(cur-1,-1);});
+function fit() { const k = Math.min(innerWidth / 1920, innerHeight / 1080), st2 = document.getElementById('stage').style;
+  st2.left = (innerWidth - 1920 * k) / 2 + 'px'; st2.top = (innerHeight - 1080 * k) / 2 + 'px'; st2.transform = `scale(${k})`; }
+addEventListener('resize', fit); 
+const stage=document.getElementById('stage');st._t=st._t||{};
+if(st._o){const P=new Map(st._o.map((k,i)=>[k,i]));slides.sort((a,b)=>(P.has(a.dataset.name)?P.get(a.dataset.name):1e4)-(P.has(b.dataset.name)?P.get(b.dataset.name):1e4));slides.forEach(s=>stage.appendChild(s));}
+slides.forEach(s=>{const t=st._t[s.dataset.name];if(t!=null)s.innerHTML=t;});
+const NB=' ';function soigner(root){const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){if(n.parentElement.closest('a,svg'))continue;
+  n.nodeValue=n.nodeValue.replace(/ ([:;?!»])/g,NB+'$1').replace(/« /g,'«'+NB).replace(/(\d) (?=[\d\p{L}€%×])/gu,'$1'+NB).replace(/([≈×]) /g,'$1'+NB).replace(/(?<=^|[\s («’'])(\p{L}{1,2}) /gu,'$1'+NB);}
+  root.querySelectorAll('p,li,figcaption,td,.note').forEach(e=>{const w=document.createTreeWalker(e,NodeFilter.SHOW_TEXT);let n,l;while(n=w.nextNode())if(n.nodeValue.trim())l=n;if(l&&!l.parentElement.closest('a,svg'))l.nodeValue=l.nodeValue.replace(/ (?=\S+\s*$)/,NB);});}
+soigner(stage);
+function move(d){let t=cur+d;while(t>=0&&t<slides.length&&!live(t))t+=d;if(t<0||t>=slides.length)return;const a=slides[cur];slides[cur]=slides[t];slides[t]=a;st._o=slides.map(s=>s.dataset.name);save();slides.forEach(s=>stage.appendChild(s));go(t,d);}
+bl.onclick=e=>{e.stopPropagation();move(-1)};br.onclick=e=>{e.stopPropagation();move(1)};
+bm.onclick=e=>{e.stopPropagation();const on=document.body.classList.toggle('edit');bm.classList.toggle('a',on);slides.forEach(s=>s.contentEditable=on?'true':'false');};
+stage.addEventListener('input',e=>{const s=e.target.closest('.slide');if(!s)return;st._t[s.dataset.name]=s.innerHTML;save();});
+be.onclick=async e=>{e.stopPropagation();be.textContent='…';const c=document.documentElement.cloneNode(true);c.querySelector('body').className='show';
+ c.querySelectorAll('.slide').forEach(s=>{s.removeAttribute('contenteditable');if(st[s.dataset.name]==='x')s.remove();});
+ for(const m of c.querySelectorAll('img')){try{const b=await (await fetch(m.getAttribute('src'))).blob();m.src=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});}catch(x){}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['<!doctype html>'+c.outerHTML],{type:'text/html'}));a.download='Palais_Brongniart.html';a.click();be.textContent='Exporter';};
+fit();go(0,1);
+</script>
+</body>
+</html>
