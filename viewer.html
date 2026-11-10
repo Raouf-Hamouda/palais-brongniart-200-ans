@@ -36,6 +36,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
+import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+import { GEO, COLX, DIM } from './modele_geo.js?v=1';
 
 // ---------------------------------------------------------------------------
 // 1. The building, from the elevation drawing (metres, y up, façade faces +z)
@@ -77,6 +79,7 @@ scene.background = new THREE.Color('#f4f4f4');
 scene.fog = new THREE.Fog('#f4f4f4', 160, 420);
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
 
 const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 1200);
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -120,12 +123,54 @@ scene.add(hemi);
 // ---------------------------------------------------------------------------
 // 3. Materials
 // ---------------------------------------------------------------------------
-const stone = new THREE.MeshStandardMaterial({ color: '#e9e5dc', roughness: 0.92, metalness: 0 });
+// Stone with its courses drawn in the shader, from the world position: horizontal joints every 0.48 m,
+// staggered vertical joints on walls, one tint per block. Columns only get their drum joints.
+function appareil(mat, drums) {
+  mat.onBeforeCompile = sh => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN;')
+      .replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
+        vec4 wp4 = vec4(transformed, 1.0); vec3 wn3 = objectNormal;
+        #ifdef USE_INSTANCING
+          wp4 = instanceMatrix * wp4; wn3 = mat3(instanceMatrix) * wn3;
+        #endif
+        vWP = (modelMatrix * wp4).xyz; vWN = normalize(mat3(modelMatrix) * wn3);`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+      varying vec3 vWP; varying vec3 vWN;
+      float hsh(vec2 q) { return fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453); }`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        { float H = ${drums ? '1.18' : '0.48'}; float cy = vWP.y / H; float row = floor(cy); float fy = abs(fract(cy) - .5) * 2.;
+          float aw = fwidth(cy) * 2.; float jo = smoothstep(1. - .035 - aw, 1. - aw * .3, fy);
+          float tint = hsh(vec2(row, 3.));
+          ${drums ? '' : `float u = (abs(vWN.x) > .7 ? vWP.z : vWP.x) / 1.15 + .5 * mod(row, 2.); float fx = abs(fract(u) - .5) * 2.; float au = fwidth(u) * 2.;
+          jo = max(jo, smoothstep(1. - .015 - au, 1. - au * .3, fx)); tint = hsh(vec2(row, floor(u)));
+          jo *= step(abs(vWN.y), .5);`}
+          float far = 1. / (1. + pow(aw * 9., 2.));
+          diffuseColor.rgb *= (1. - .22 * jo * far) * (.955 + .09 * tint * far) * (.93 + .07 * hsh(floor(vWP.xy * 37.) + floor(vWP.z * 37.))); }`);
+  };
+  return mat;
+}
+const stone = appareil(new THREE.MeshStandardMaterial({ color: '#d6cdb9', roughness: 0.93, metalness: 0, side: THREE.DoubleSide }), false);
 const stoneDark = new THREE.MeshStandardMaterial({ color: '#d4cfc4', roughness: 0.95 });
-const glass = new THREE.MeshStandardMaterial({ color: '#9aa3ad', roughness: 0.35, metalness: 0.2 });
+const glass = new THREE.MeshStandardMaterial({ color: '#1d2832', roughness: 0.1, metalness: 0.7, envMapIntensity: 1.6 });
 const roofMat = new THREE.MeshStandardMaterial({ color: '#6f7378', roughness: 0.8 });
-const ground = new THREE.MeshStandardMaterial({ color: '#cfccc4', roughness: 1 });
 const asphalt = new THREE.MeshStandardMaterial({ color: '#8f8f8c', roughness: 1 });
+const MATS = {
+  pierre: stone,
+  fut: appareil(new THREE.MeshStandardMaterial({ color: '#dad1bd', roughness: 0.9, metalness: 0, side: THREE.DoubleSide }), true),
+  verre: glass,
+  fer: new THREE.MeshStandardMaterial({ color: '#25282c', roughness: 0.5, metalness: 0.6, side: THREE.DoubleSide }),
+  zinc: new THREE.MeshStandardMaterial({ color: '#8a9299', roughness: 0.5, metalness: 0.55, side: THREE.DoubleSide }),
+  gens: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.8, side: THREE.DoubleSide }),
+};
+// paving of the square: granite slabs drawn once on a canvas
+const ground = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d'); let sd = 11; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+  g.fillStyle = '#9b9892'; g.fillRect(0, 0, 512, 512);
+  for (let j = 0; j < 8; j++) for (let i = -1; i < 4; i++) { const v = 164 + rnd() * 11 | 0; g.fillStyle = `rgb(${v},${v - 2},${v - 7})`; g.fillRect((i + (j % 2) * .5) * 128 + 1.5, j * 64 + 1.5, 125, 61); }
+  for (let k = 0; k < 9000; k++) { g.fillStyle = `rgba(0,0,0,${rnd() * .05})`; g.fillRect(rnd() * 512, rnd() * 512, 1.5, 1.5); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(900 / 4, 900 / 4); t.anisotropy = 8; t.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.MeshStandardMaterial({ map: t, roughness: 1 });
+})();
 
 function box(w, h, d, mat, x, y, z, parent = scene) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -136,13 +181,13 @@ function box(w, h, d, mat, x, y, z, parent = scene) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Build the Palais
+// 4. Build the Palais: the stone comes from modele_geo.js (generated by modele/gen_modele.py)
 // ---------------------------------------------------------------------------
 let flag;
 const palais = new THREE.Group();
 scene.add(palais);
-const FRONT = 0;                         // z of the column faces
-const WALL = -4.2;                       // recessed wall behind the colonnade
+const FRONT = 0;                         // z of the stylobate front, the columns stand 1.1 m behind
+const WALL = DIM.WALL;                   // recessed wall behind the colonnade
 const half = B.platform / 2;
 
 // ground + street
@@ -150,104 +195,46 @@ const half = B.platform / 2;
   const g = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), ground);
   g.rotation.x = -Math.PI / 2; g.receiveShadow = true; scene.add(g);
   const road = new THREE.Mesh(new THREE.PlaneGeometry(300, 14), asphalt);
-  road.rotation.x = -Math.PI / 2; road.position.set(0, 0.01, 40); road.receiveShadow = true; scene.add(road);
+  road.rotation.x = -Math.PI / 2; road.position.set(0, 0.012, 40.6); road.receiveShadow = true; scene.add(road);
+  box(300, 0.16, 0.3, stoneDark, 0, 0, 33.45); box(300, 0.16, 0.3, stoneDark, 0, 0, 47.75);
 }
-
-// podium under the whole front + body
-box(B.total, B.base, B.depth, stone, 0, 0, WALL - B.depth / 2 + 4.2, palais);
-// main body behind the colonnade, up to attic
-box(B.platform + 0.6, B.topAttic, B.depth - 4, stone, 0, 0, WALL - (B.depth - 4) / 2, palais);
-// recessed wall face between columns, with two rows of arched windows
 {
-  const wall = box(B.platform, B.column, 0.4, stoneDark, 0, B.base, WALL + 0.2, palais);
-  const win = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 3.6), glass);
-  const arch = new THREE.Mesh(new THREE.CircleGeometry(0.8, 24, 0, Math.PI), glass);
-  for (let i = 0; i < B.columns - 1; i++) {
-    const x = -half + B.bay * (i + 1);
-    for (const y of [B.base + 2.2, B.base + 7.2]) {
-      const w = win.clone(); w.position.set(x, y + 1.8, WALL + 0.45); palais.add(w);
-      const a = arch.clone(); a.position.set(x, y + 3.6, WALL + 0.45); palais.add(a);
-    }
+  const o = new THREE.Object3D(), col = new THREE.Color();
+  for (const [name, g] of Object.entries(GEO)) {
+    let geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(g.p, 3)); geo.setIndex(new THREE.BufferAttribute(g.i, 1));
+    geo = toCreasedNormals(geo, 0.75);
+    let mesh;
+    if (g.inst) {
+      mesh = new THREE.InstancedMesh(geo, MATS[g.mat], g.inst.length);
+      g.inst.forEach((t, k) => {
+        o.position.set(t[0], t[1], t[2]); o.rotation.set(0, t[3] || 0, 0); o.scale.setScalar(t[4] || 1); o.updateMatrix(); mesh.setMatrixAt(k, o.matrix);
+        if (name === 'personne') mesh.setColorAt(k, col.set(k === 0 ? '#1f3fff' : ['#8b8e94', '#9a9da3', '#7c7f86'][k % 3]));
+      });
+    } else mesh = new THREE.Mesh(geo, MATS[g.mat]);
+    mesh.castShadow = name !== 'verre'; mesh.receiveShadow = true; palais.add(mesh);
   }
 }
-// 14 columns on the platform
+// BOURSE on the frieze + flag
 {
-  const shaft = new THREE.CylinderGeometry(0.78, 0.9, B.column - 1.6, 28);
-  const cap = new THREE.BoxGeometry(2.2, 1.0, 2.2);
-  const neck = new THREE.CylinderGeometry(0.95, 0.78, 0.6, 28);
-  const plinth = new THREE.BoxGeometry(2.0, 0.6, 2.0);
-  for (let i = 0; i < B.columns; i++) {
-    const x = -half + B.bay / 2 + i * B.bay;
-    const col = new THREE.Group();
-    const p = new THREE.Mesh(plinth, stone); p.position.y = 0.3; col.add(p);
-    const s = new THREE.Mesh(shaft, stone); s.position.y = 0.6 + (B.column - 1.6) / 2; col.add(s);
-    const n = new THREE.Mesh(neck, stone); n.position.y = B.column - 1.0 + 0.3; col.add(n);
-    const c = new THREE.Mesh(cap, stone); c.position.y = B.column - 0.5; col.add(c);
-    col.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
-    col.position.set(x, B.base, FRONT - 1.1);
-    palais.add(col);
-  }
-}
-// entablature with BOURSE + attic, slightly proud of the columns
-{
-  const ent = box(B.platform + 1.2, B.entab, 6, stone, 0, B.topColumn, FRONT - 2.4, palais);
-  const att = box(B.platform + 0.4, B.attic, 5.2, stone, 0, B.topEntab, FRONT - 2.6, palais);
-  // lettering as a canvas texture on the front face
   const cv = document.createElement('canvas'); cv.width = 2048; cv.height = 128;
   const ctx = cv.getContext('2d');
-  ctx.fillStyle = '#e9e5dc'; ctx.fillRect(0, 0, 2048, 128);
-  ctx.fillStyle = '#4a4740'; ctx.font = '600 72px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.letterSpacing = '26px';
-  ctx.fillText('B O U R S E', 1024, 66);
-  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-  const band = new THREE.Mesh(new THREE.PlaneGeometry(B.platform + 1.2, 1.3), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 }));
-  band.position.set(0, B.topColumn + B.entab * 0.5, FRONT + 0.61);
+  ctx.fillStyle = '#4a4740'; ctx.font = '600 84px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '30px';
+  ctx.fillText('B O U R S E', 1024, 68);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const band = new THREE.Mesh(new THREE.PlaneGeometry(12.8, 0.8), new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.9 }));
+  band.position.set(0, B.topColumn + 1.4, DIM.FACE + 0.03);
   palais.add(band);
-  // flag pole + flag
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 7, 8), roofMat);
   pole.position.set(0, B.topAttic + 3.5, FRONT - 2.6); palais.add(pole);
   flag = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.4, 12, 6), new THREE.MeshStandardMaterial({ color: '#1f3fff', side: THREE.DoubleSide }));
   flag.position.set(1.1, B.topAttic + 6.2, FRONT - 2.6); palais.add(flag);
 }
-// wings: north (left, -x) and south (right, +x), pilasters, top band level with the entablature
-for (const side of [-1, 1]) {
-  const cx = side * (half + B.wing / 2);
-  const w = box(B.wing, B.topEntab, 22, stone, cx, 0, FRONT - 11 - 0.6, palais);
-  box(B.wing, 1.2, 22.4, stoneDark, cx, B.topColumn + 0.4, FRONT - 11 - 0.6, palais); // band
-  // 4 pilasters per wing
-  for (let i = 0; i < 4; i++) {
-    const px = cx - B.wing / 2 + B.wing * (i + 0.5) / 4;
-    box(1.1, B.column, 0.5, stone, px, B.base, FRONT - 0.4, palais);
-  }
-  // door in the north wing, 1.75 m person beside it
-  if (side === -1) {
-    box(1.4, 2.6, 0.2, glass, cx + 3, 0, FRONT - 0.25, palais);
-  }
-}
-// grand steps in front of the colonnade (the hatched block in the drawing)
+// scale: a 12 m city bus on the street (the 1.75 m figure in blue stands left of the steps)
 {
-  const steps = 10, run = 0.42, rise = B.base / steps;
-  for (let i = 0; i < steps; i++) {
-    box(B.platform - 2, rise, run * (steps - i) + 1.5, stoneDark, 0, i * rise, FRONT + (run * (steps - i) + 1.5) / 2 - 0.2, palais);
-  }
-}
-// roof far behind: hipped mass up to 30 m
-{
-  const roofW = B.platform - 2, roofD = B.depth - 16, h = B.roofTop - B.topAttic;
-  const geo = new THREE.CylinderGeometry(0, 1, 1, 4, 1);
-  const roof = new THREE.Mesh(geo, roofMat);
-  roof.scale.set(roofW / Math.SQRT2 * 1.0, h, roofD / Math.SQRT2);
-  roof.rotation.y = Math.PI / 4;
-  roof.position.set(0, B.topAttic + h / 2, WALL - roofD / 2 - 6);
-  roof.castShadow = roof.receiveShadow = true;
-  palais.add(roof);
-}
-// scale figures: 1.75 m person, 12 m city bus
-{
-  const p = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, B.person - 0.44, 4, 10), new THREE.MeshStandardMaterial({ color: '#1f3fff' }));
-  p.position.set(-half - 5, B.person / 2, 6); p.castShadow = true; scene.add(p);
   const bus = new THREE.Group();
-  const body = box(B.bus, 3.0, 2.55, new THREE.MeshStandardMaterial({ color: '#f2f2f2', roughness: 0.5 }), 0, 0.5, 0, bus);
+  box(B.bus, 3.0, 2.55, new THREE.MeshStandardMaterial({ color: '#f2f2f2', roughness: 0.5 }), 0, 0.5, 0, bus);
   box(B.bus - 1, 1.1, 2.6, glass, 0, 1.7, 0, bus);
   for (const x of [-4, 4]) for (const z of [-1.1, 1.1]) {
     const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.3, 16), roofMat);
@@ -330,14 +317,12 @@ const matRod = new THREE.MeshStandardMaterial({ color: P.rods, metalness: 0.6, r
 function bays() {
   // strip between each pair of column shafts, 1.05 m clear of each shaft centre
   const s = [];
-  for (let i = 0; i < B.columns - 1; i++) {
-    const a = -half + B.bay / 2 + i * B.bay;
-    s.push([a + 0.35, a + B.bay - 0.35, FRONT - 2.0]);   // curtain behind the column shafts
-  }
+  for (let i = 0; i < COLX.length - 1; i++) s.push([COLX[i] + 0.35, COLX[i + 1] - 0.35, SKZ]);   // the sheet hangs on the square side, in front of the shafts
   return s;
 }
-function behindColumns() { return P.coverage.startsWith('between columns'); }
-function skinZ() { return behindColumns() ? FRONT - 2.0 : FRONT + P.standoff; }
+const SKZ = DIM.CZ + 0.9;                 // frame 0.9 m in front of the column axis, clear of bases and capitals
+function behindColumns() { return P.coverage.startsWith('between columns'); }   // name kept: the bays between the columns
+function skinZ() { return behindColumns() ? SKZ : FRONT + P.standoff; }
 let kz;   // per-key z
 let det, dx, dy, dz, ex, ey, ez;   // detached flag, drag offset, explode direction
 function skinTop() { return behindColumns() ? Math.min(P.top, B.topColumn - 0.3) : P.top; }
@@ -348,7 +333,7 @@ function coverageSpans() {
     case 'wings': return [[L, -half], [half, R]];
     case 'full front': return [[L, R]];
     case 'between columns': return bays();
-    case 'between columns + wings': return [[L, -half, FRONT + 0.25], ...bays(), [half, R, FRONT + 0.25]];
+    case 'between columns + wings': return [[L, -half, DIM.FACE + 0.45], ...bays(), [half, R, DIM.FACE + 0.45]];
     case 'checker bays': { const s = []; for (let i = 0; i < B.columns; i += 2) s.push([-half + i * B.bay, -half + (i + 1) * B.bay]); return s; }
     default: return [[L, R]];
   }
@@ -408,6 +393,25 @@ function buildSkin() {
       const rail = new THREE.BoxGeometry(b - a, 0.12, 0.12); rail.translate((a + b) / 2, y, z - 0.08); rodGeos.push(rail);
     }
   });
+  // technique A: per bay, three struts pressed between the shafts, arms to the frame, uprights on floor pads
+  if (behindColumns()) {
+    const V = (x, y, z) => new THREE.Vector3(x, y, z), up = V(0, 1, 0), r = DIM.DL / 2, z = SKZ - 0.08;
+    const tube = (p, q, rad) => { const d = q.clone().sub(p), g = new THREE.CylinderGeometry(rad, rad, d.length(), 10);
+      g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, d.clone().normalize())); g.translate((p.x + q.x) / 2, (p.y + q.y) / 2, (p.z + q.z) / 2); return g; };
+    const bx = (w, h, dd, x, y, zz) => { const g = new THREE.BoxGeometry(w, h, dd); g.translate(x, y, zz); return g; };
+    for (let b = 0; b < COLX.length - 1; b++) {
+      const xa = COLX[b], xb = COLX[b + 1];
+      for (const sy of [2.6, 6.5, 10.4]) {
+        const y = B.base + sy;
+        rodGeos.push(tube(V(xa + r + 0.06, y, DIM.CZ), V(xb - r - 0.06, y, DIM.CZ), 0.0285));
+        for (const [x, sg, xf] of [[xa + r - 0.02, 1, xa + 0.35], [xb - r + 0.02, -1, xb - 0.35]]) {
+          rodGeos.push(bx(0.07, 0.4, 0.3, x + sg * 0.04, y, DIM.CZ));
+          rodGeos.push(tube(V(x + sg * 0.45, y, DIM.CZ), V(xf + sg * 0.04, y, z), 0.03));
+        }
+      }
+      for (const x of [xa + 0.35, xb - 0.35]) { rodGeos.push(bx(0.08, top - P.bottom + 0.3, 0.08, x, (top + P.bottom) / 2, z)); rodGeos.push(bx(0.24, 0.06, 0.24, x, P.bottom + 0.03, z)); }
+    }
+  }
   N = i;
   keys.count = N;
   // merge rods by hand (avoid an addon import)
@@ -618,8 +622,8 @@ function setSun() {
   sun.target.position.set(0, 8, 0);
   const warm = 1 - Math.min(1, el / 0.6);
   sun.color.setRGB(1, 0.96 - warm * 0.25, 0.9 - warm * 0.55);
-  sun.intensity = 1.2 + 2.4 * Math.min(1, el / 0.9);
-  hemi.intensity = 0.45 + 0.6 * Math.min(1, el / 0.9);
+  sun.intensity = 1.0 + 1.9 * Math.min(1, el / 0.9);
+  hemi.intensity = 0.22 + 0.3 * Math.min(1, el / 0.9);
   const sky = new THREE.Color().setRGB(0.957 - warm * 0.1, 0.957 - warm * 0.2, 0.957 - warm * 0.25);
   scene.background = sky; scene.fog.color = sky;
   renderer.toneMappingExposure = P.exposure;
