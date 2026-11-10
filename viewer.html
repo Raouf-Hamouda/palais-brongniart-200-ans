@@ -99,6 +99,10 @@ function goCam(name, instant = false) {
 }
 let camTween = null;
 goCam('street', true);
+// ?cam=x,y,z,tx,ty,tz : vue de départ · ?ui=0 : sans les panneaux (pour les captures)
+{ const q = new URLSearchParams(location.search), c = (q.get('cam') || '').split(',').map(Number);
+  if (c.length === 6 && c.every(isFinite)) { camera.position.set(c[0], c[1], c[2]); controls.target.set(c[3], c[4], c[5]); }
+  if (q.get('ui') === '0') document.head.insertAdjacentHTML('beforeend', '<style>#title,#hud,#hint,.lil-gui{display:none!important}</style>'); }
 
 // Light: sun with shadows, sky hemisphere
 const sun = new THREE.DirectionalLight('#fff6e8', 3.2);

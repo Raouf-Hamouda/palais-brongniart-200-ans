@@ -62,6 +62,7 @@
   .t td:last-child { font-family: "Azeret Mono", monospace; font-size: 15px; color: var(--mute); }
   .t b { color: var(--ink); font-weight: 500; }
   .t tr.sum td { border-bottom: 1px solid #111; }
+  .t5 { font-size: 19px !important; } .t5 td { padding: 11px 16px 11px 0; } .t5 td:nth-child(1), .t5 td:nth-child(3), .t5 td:nth-child(4) { white-space: nowrap; } .t5 td:nth-child(3) { font-family: var(--mono); font-size: 15px; } .t5 td:last-child { font-family: var(--txt) !important; font-size: 17px !important; color: #666; }
   .t3 td, .t3 th { white-space: nowrap; } .t3 td:last-child { font-family: inherit; font-size: inherit; color: #333; }
   .note { font-family: "Azeret Mono", monospace; font-size: 15px; color: var(--mute); margin-top: 22px; line-height: 1.5; max-width: 1500px; }
   .links { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 0 18px; align-items: baseline; margin-top: 30px; font-family: "Azeret Mono", monospace; font-size: 16px; }
@@ -121,7 +122,7 @@
 
 <!-- 1 · couverture -->
 <!-- 1 · couverture -->
-<section class="slide on">
+<section data-name="s0" class="slide on">
   <div class="top"><span>Palais Brongniart</span><span>1826 · 2026</span></div>
   <div class="label">Projet · bicentenaire</div>
   <h1>Palais Brongniart, 200 ans de vie</h1>
@@ -130,7 +131,7 @@
 </section>
 
 <!-- 2 · l'idée -->
-<section class="slide">
+<section data-name="s1" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>L'idée</span></div>
   <div class="label">L'idée</div>
       <h2>Un lieu de Paris qui vit depuis 200 ans</h2>
@@ -145,7 +146,7 @@
 </section>
 
 <!-- vie -->
-<section class="slide hero">
+<section data-name="s2" class="slide hero">
   <div class="top"><span>Palais Brongniart</span><span>Le projet</span></div>
   <div class="label">Le projet</div>
   <h1>La vie, c'est du mouvement.</h1>
@@ -154,8 +155,25 @@
 </section>
 
 <!-- trois -->
+<section data-name="s3" class="slide">
+  <div class="top"><span>Palais Brongniart</span><span>Deux idées</span></div>
+  <div class="label">Deux idées</div>
+  <h2 style="margin-bottom:24px">Deux façons de faire bouger le palais</h2>
+  <div class="row" style="grid-template-columns:repeat(2,1fr);gap:50px">
+    <div class="opt"><div class="n" style="font-size:72px">1</div><h3 style="margin:6px 0 12px">Le Souffle</h3>
+      <img src="img/opt5_plaques.jpg" style="width:100%;height:260px;object-fit:cover;display:block">
+      <div style="display:grid;grid-template-columns:150px 1fr;gap:14px;margin-top:14px;align-items:start"><img src="img/ref_cascading_keys.jpg" style="width:150px;height:100px;object-fit:cover;display:block"><figcaption style="margin:0"><b>Réf.</b> Cascading Keys, Metaguise</figcaption></div>
+      <p style="font-size:20px;margin-top:16px">Des plaques qui battent au vent.</p></div>
+    <div class="opt"><div class="n" style="font-size:72px">2</div><h3 style="margin:6px 0 12px">La Bulle</h3>
+<img src="img/bulle/bulle_v7_blanc.jpg" style="width:100%;height:260px;object-fit:cover;display:block">
+<div style="display:grid;grid-template-columns:150px 1fr;gap:14px;margin-top:14px;align-items:start"><img src="img/gf/messam.jpg" style="width:150px;height:100px;object-fit:cover;display:block"><figcaption style="margin:0"><b>Réf.</b> Steve Messam</figcaption></div>
+<p style="font-size:20px;margin-top:16px">Une bulle géante qui déborde d’entre les colonnes.</p></div>
+  </div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
 <!-- div1 -->
-<section class="slide divider hero">
+<section data-name="s4" class="slide divider hero">
   <div class="top"><span>Palais Brongniart</span><span>Idée 1</span></div>
   <div class="row" style="grid-template-columns:700px 1fr;gap:70px;align-items:start">
     <div>
@@ -169,7 +187,7 @@
 </section>
 
 <!-- 3 · la référence du mouvement -->
-<section class="slide">
+<section data-name="s5" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>Référence</span></div>
   <div class="label">Le mouvement</div>
       <h2>Des plaques qui battent au vent</h2>
@@ -187,7 +205,7 @@
 </section>
 
 <!-- 7 · inspirations construites -->
-<section class="slide">
+<section data-name="s6" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>Inspirations</span></div>
   <div class="label">Ce qui existe déjà</div>
   <h2>Des façades qui montrent le vent</h2>
@@ -199,7 +217,7 @@
 </section>
 
 <!-- autres -->
-<section class="slide">
+<section data-name="s7" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>Inspirations</span></div>
   <div class="label">Pas seulement Ned Kahn</div>
   <h2 style="margin-bottom:30px">Le geste existe partout, en produit</h2>
@@ -216,7 +234,7 @@
 
 
 <!-- 4 · comment c'est tenu -->
-<section class="slide">
+<section data-name="s8" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
   <div class="label">Technique A</div>
   <h2>Une plaque, une tige, un rail</h2>
@@ -232,11 +250,28 @@
   <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
 </section>
 
+<section class="slide" data-name="ta3">
+  <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
+  <div class="label">Technique A · le serrage en volume</div>
+  <h2>Un étrésillon, un sabot, un pied</h2>
+  <figure class="contain"><img src="img/dessins/noeud_souffle.svg" style="height:600px" alt=""><figcaption><b>Le serrage et le pied</b> · vus en volume, depuis la place</figcaption></figure>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="ta4">
+  <div class="top"><span>Palais Brongniart</span><span>Les pièces</span></div>
+  <div class="label">Technique A · les pièces</div>
+  <h2 style="margin-bottom:28px">Chaque pièce, sa cote, son fournisseur</h2>
+  <table class="t t5"><tr><th>pièce</th><th>cotes</th><th>quantité</th><th>prix relevé</th><th>où la trouver</th></tr><tr><td><b>Étrésillon réglable</b></td><td>étai tirant-poussant 2,20 à 3,80 m, fût Ø 57 mm, 13,9 kg, tient 430 à 1 420 kg</td><td>39</td><td>44,90 € HT</td><td>Direct Mat, Altrad (France) · Peri (Allemagne)</td></tr><tr><td><b>Sabot cintré</b> et feutre</td><td>acier 300 × 400 mm cintré au rayon du fût, feutre 20 mm</td><td>78</td><td>sur devis</td><td>serrurier-métallier, sur mesure</td></tr><tr><td><b>Cadre</b></td><td>tube acier 80 × 80 × 3 mm, cadre de 2,86 × 11,5 m</td><td>13 cadres, 373 m</td><td>35 à 60 € HT/m</td><td>négoce acier : Descours & Cabaud, KDI (France)</td></tr><tr><td><b>Tige</b></td><td>rond Ø 12 mm, 2,66 m</td><td>286</td><td>sur devis</td><td>même négoce</td></tr><tr><td><b>Plaque</b></td><td>alu 2 mm, 0,30 × 0,42 m, laquée une face</td><td>2 002, soit 252 m²</td><td>53 €/m², laquage dès 10 €/m²</td><td>découpe laser en ligne : John Steel (France)</td></tr><tr><td><b>Pied</b></td><td>platine 400 × 400 mm sur caoutchouc 20 mm</td><td>26</td><td>sur devis</td><td>serrurier-métallier</td></tr></table>
+  <div class="note">Prix publics relevés le 10 nov 2026, pas des devis. Sections et quantités : pré-dimensionnement du dessin, à valider par un bureau d’études.</div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
 <section class="slide" data-name="tb1">
   <div class="top"><span>Palais Brongniart</span><span>Détails</span></div>
   <div class="label">Technique B</div>
   <h2>Une dalle, une grille, des sangles</h2>
-  <figure class="contain"><img src="img/dessins/eclate_b_souffle.svg" style="height:600px" alt=""><figcaption><b>Éclaté d’une travée</b> · la pose en trois temps, puis la dalle sur sa grille</figcaption></figure>
+  <figure class="contain"><img src="img/dessins/eclate_b_souffle.svg" style="height:600px" alt=""><figcaption><b>Éclaté d’une travée</b> · la pose en trois temps, puis la sangle vue de la galerie</figcaption></figure>
   <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
 </section>
 
@@ -248,8 +283,17 @@
   <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
 </section>
 
+<section class="slide" data-name="tb3">
+  <div class="top"><span>Palais Brongniart</span><span>Les pièces</span></div>
+  <div class="label">Technique B · les pièces</div>
+  <h2 style="margin-bottom:28px">Chaque pièce, sa cote, son fournisseur</h2>
+  <table class="t t5"><tr><th>pièce</th><th>cotes</th><th>quantité</th><th>prix relevé</th><th>où la trouver</th></tr><tr><td><b>Sangle à cliquet</b> sans fin</td><td>polyester 50 mm, 6 m pour un tour de fût de 3,61 m, rupture 7 500 daN</td><td>56</td><td>15,65 € HT</td><td>SCS Levage, Levage et Arrimage (France) · SpanSet, Dolezych (Allemagne)</td></tr><tr><td><b>Feutre</b></td><td>bande de 110 mm, 5 mm d’épaisseur, 3,7 m</td><td>56</td><td>sur devis</td><td></td></tr><tr><td><b>Câble inox</b></td><td>Ø 4 mm, 2,9 m par travée et par niveau</td><td>52, soit 151 m</td><td>3,40 €/m</td><td>Carl Stahl (Allemagne) · Jakob (Suisse)</td></tr><tr><td><b>Ridoir inox</b></td><td>M6, pour câble de 4 mm</td><td>104</td><td>16,35 € les quatre</td><td>Leroy Merlin (France) · Carl Stahl (Allemagne)</td></tr><tr><td><b>Grille</b></td><td>maille de 30 cm, 2,70 × 11,4 m par travée</td><td>13, soit 400 m²</td><td>sur devis</td><td></td></tr><tr><td><b>Dalle à paillettes</b></td><td>30 × 30 cm, 9 par rangée, 38 rangées</td><td>4 446</td><td>4,99 € les six · version extérieure dès 10,80 £ pièce</td><td>Action (France) · Sola Air (Royaume-Uni)</td></tr></table>
+  <div class="note">Prix publics relevés le 10 nov 2026, pas des devis. Prix Sola Air : catalogue 2021. Quantités : pré-dimensionnement du dessin, à valider par un bureau d’études.</div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
 <!-- 5 · le dessin -->
-<section class="slide">
+<section data-name="s12" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>Le dessin</span></div>
   <div class="label">Le palais coté</div>
   <h2>Tout se joue entre les 14 colonnes</h2>
@@ -264,26 +308,29 @@
 </section>
 
 <!-- 6 · le modèle -->
-<section class="slide">
+<section data-name="s13" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>Le modèle</span></div>
   <div class="label">Le modèle 3D</div>
-  <h2>Un rideau de plaques derrière les colonnes</h2>
-  <div class="row two">
-    <figure><img src="img/preview_columns_street.jpg" style="height:480px" alt=""><figcaption><b>Derrière les colonnes</b> · vue de la rue</figcaption></figure>
-    <figure><img src="img/preview_columns_close.jpg" style="height:480px" alt=""><figcaption><b>Derrière les colonnes</b> · le long de la colonnade</figcaption></figure>
+  <h2 style="margin-bottom:26px">Un rideau de plaques derrière les colonnes</h2>
+  <div class="row" style="grid-template-columns:repeat(3,1fr);gap:14px 28px">
+    <figure><img src="img/modele_1_rue.jpg" style="height:258px" alt=""><figcaption style="margin-top:8px"><b>De la rue</b></figcaption></figure>
+    <figure><img src="img/modele_2_face.jpg" style="height:258px" alt=""><figcaption style="margin-top:8px"><b>De face</b></figcaption></figure>
+    <figure><img src="img/modele_3_haut.jpg" style="height:258px" alt=""><figcaption style="margin-top:8px"><b>Vue du ciel</b></figcaption></figure>
+    <figure><img src="img/modele_4_colonnade.jpg" style="height:258px" alt=""><figcaption style="margin-top:8px"><b>Le long de la colonnade</b></figcaption></figure>
+    <figure><img src="img/modele_5_marches.jpg" style="height:258px" alt=""><figcaption style="margin-top:8px"><b>Depuis les marches</b></figcaption></figure>
+    <figure><img src="img/modele_6_biais.jpg" style="height:258px" alt=""><figcaption style="margin-top:8px"><b>En biais</b></figcaption></figure>
   </div>
-  <div class="facts" style="margin-top:34px">
+  <div class="facts" style="margin-top:20px">
     <div><b>2 002</b><span>plaques</span></div>
     <div><b>0,30 × 0,42 m</b><span>une plaque</span></div>
     <div><b>22</b><span>rangées</span></div>
     <div><b>vent réel</b><span>chaque plaque a son poids</span></div>
   </div>
-  <div class="links"><span>Le modèle en ligne</span><a href="https://raouf-hamouda.github.io/palais-brongniart-200-ans/viewer.html" target="_blank">raouf-hamouda.github.io/palais-brongniart-200-ans/viewer.html</a><span>Code</span><a href="https://github.com/Raouf-Hamouda/palais-brongniart-200-ans" target="_blank">github.com/Raouf-Hamouda/palais-brongniart-200-ans</a></div>
   <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
 </section>
 
 <!-- live -->
-<section class="slide" data-live>
+<section data-name="s14" class="slide" data-live>
   <div class="top"><span>Palais Brongniart</span><span>Le modèle</span></div>
   <div class="label">Le modèle en direct</div>
   <iframe id="viewer" data-src="viewer.html?v=3" title="Modèle 3D" style="position:absolute;left:140px;top:200px;width:1640px;height:760px;border:1px solid var(--line)"></iframe>
@@ -297,7 +344,7 @@
 
 
 <!-- pose -->
-<section class="slide">
+<section data-name="s16" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>La pose</span></div>
   <div class="label">La pose entre les colonnes</div>
       <h2>Rien ne touche la pierre</h2>
@@ -318,41 +365,45 @@
 </section>
 
 <!-- fiche -->
-<section class="slide">
+<section data-name="s17" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>Fiche technique</span></div>
   <div class="label">Fiche technique et prix</div>
   <h2 style="margin-bottom:30px">Deux façons de le construire</h2>
   <div class="row two" style="gap:80px;align-items:start">
     <div>
-      <figure class="contain"><img src="img/dessins/tech_a.svg" style="height:190px" alt=""></figure>
+      <figure class="contain"><img src="img/dessins/tech_a.svg" style="height:120px" alt=""></figure>
       <h3 class="h3">A · Plaques sur tiges</h3>
       <table class="t t3">
         <tr><th>poste</th><th>prix trouvé</th><th>pour le projet</th></tr>
         <tr><td>Tôle alu 2 mm</td><td>53 €/m²</td><td><b>≈ 16 k€</b></td></tr>
         <tr><td>Laquage 1 face</td><td>dès 10 €/m²</td><td><b>≈ 3 k€</b></td></tr>
         <tr><td>Nacelle</td><td>dès 200 €/jour</td><td><b>≈ 4 k€</b></td></tr>
-        <tr><td>Cadres, découpe, tiges, pose</td><td></td><td><b>sur devis</b></td></tr>
-        <tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 23 k€</b> + devis</td></tr>
+        <tr><td>Étrésillons, 39 pièces</td><td>44,90 € HT</td><td><b>≈ 1,8 k€</b></td></tr>
+        <tr><td>Cadres, 373 m de tube 80 × 80</td><td>35 à 60 € HT/m</td><td><b>≈ 13 à 22 k€</b></td></tr>
+        <tr><td>Sabots, tiges, découpe, pose</td><td></td><td><b>sur devis</b></td></tr>
+        <tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 38 à 47 k€</b> + devis</td></tr>
       </table>
     </div>
     <div>
-      <figure class="contain"><img src="img/dessins/tech_b.svg" style="height:190px" alt=""></figure>
+      <figure class="contain"><img src="img/dessins/tech_b.svg" style="height:120px" alt=""></figure>
       <h3 class="h3">B · Panneaux à paillettes</h3>
       <table class="t t3">
         <tr><th>poste</th><th>prix trouvé</th><th>pour le projet</th></tr>
         <tr><td>Dalles de 30 cm, 4 446 pièces</td><td>4,99 € les six</td><td><b>≈ 4 k€</b></td></tr>
         <tr><td>Nacelle</td><td>dès 200 €/jour</td><td><b>≈ 4 k€</b></td></tr>
-        <tr><td>Support, pose, classement feu</td><td></td><td><b>sur devis</b></td></tr>
-        <tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 8 k€</b> + devis</td></tr>
+        <tr><td>Sangles à cliquet, 56 pièces</td><td>15,65 € HT</td><td><b>≈ 0,9 k€</b></td></tr>
+        <tr><td>Câble inox 151 m, 104 ridoirs</td><td>3,40 €/m · 4,09 €</td><td><b>≈ 0,9 k€</b></td></tr>
+        <tr><td>Grille, feutre, pose, classement feu</td><td></td><td><b>sur devis</b></td></tr>
+        <tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 10 k€</b> + devis</td></tr>
       </table>
     </div>
   </div>
-  <div class="note">Prix publics relevés le 9 nov 2026 (Hellopro, Action), pas des devis. 2 002 plaques ou 400 m² de dalles, entre les 14 colonnes.</div>
+  <div class="note">Prix publics relevés les 9 et 10 nov 2026 (Hellopro, Direct Mat, SCS Levage, Action), pas des devis. 2 002 plaques ou 400 m² de dalles, entre les 14 colonnes.</div>
   <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
 </section>
 
 <!-- vendeurs -->
-<section class="slide">
+<section data-name="s18" class="slide">
   <div class="top"><span>Palais Brongniart</span><span>Qui le vend</span></div>
   <div class="label">Qui le vend vraiment</div>
   <h2 style="margin-bottom:28px">Six fabricants, tous sur devis</h2>
@@ -413,6 +464,15 @@
 <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
 </section>
 
+<section class="slide" data-name="b6">
+  <div class="top"><span>Palais Brongniart</span><span>Le format</span></div>
+  <div class="label">Le format final</div>
+  <h2>Un volume : 11,7 m de haut, 12 lés</h2>
+  <figure class="contain"><img src="img/dessins/format_bulle.svg" style="height:500px" alt=""><figcaption><b>Un volume</b> · de face, de côté, en plan, et son patron</figcaption></figure>
+  <div class="facts" style="grid-template-columns:1.7fr 1fr 1fr 1fr"><div><b>11,7 × 2,72 × 6,28 m</b><span>haut, large, profond</span></div><div><b>161 m²</b><span>de toile par volume</span></div><div><b>12 lés</b><span>de 1,22 × 14,0 m</span></div><div><b>124 m³</b><span>d’air par volume</span></div></div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
 <section class="slide" data-name="b7">
 <div class="top"><span>Palais Brongniart</span><span>La pose</span></div><div class="label">La pose entre les colonnes</div><h2>Rien ne touche la pierre</h2>
 <div class="row split" style="grid-template-columns:760px 1fr"><div><ol class="steps"><li><b>Zéro perçage</b> dans la pierre.</li><li><b>Structure autoportante</b> derrière les colonnes, tenue par du lest.</li><li><b>Chaque contact</b> avec la pierre est protégé.</li><li><b>Gonflage</b> volume par volume.</li><li><b>Démontage</b> sans trace.</li></ol></div>
@@ -426,15 +486,39 @@
 <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
 </section>
 
+<section class="slide" data-name="b11">
+  <div class="top"><span>Palais Brongniart</span><span>Option</span></div>
+  <div class="label">Option · de l’intérieur · le format</div>
+  <h2>Une seule poche, aux cotes de la salle</h2>
+  <figure class="contain"><img src="img/dessins/interieur_bulle.svg" style="height:500px" alt=""><figcaption><b>La grande salle</b> · la membrane en place, puis son patron déplié</figcaption></figure>
+  <div class="facts" style="grid-template-columns:1.7fr 1fr 1fr 1fr"><div><b>37,68 × 24,68 × 25 m</b><span>la grande salle</span></div><div><b>≈ 5 000 m²</b><span>de membrane</span></div><div><b>31 lés</b><span>de 6 m de large</span></div><div><b>4 + 1</b><span>ventilateurs, sas d’entrée</span></div></div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
+<section class="slide" data-name="b12">
+  <div class="top"><span>Palais Brongniart</span><span>Option</span></div>
+  <div class="label">Option · de l’intérieur · méthode et prix</div>
+  <h2 style="margin-bottom:28px">Du film, de l’air, quatre ventilateurs</h2>
+  <div class="row split" style="grid-template-columns:640px 1fr;gap:70px"><div><ol class="steps"><li><b>Relever</b> la salle au laser.</li><li><b>Couper</b> 31 lés de 6 m.</li><li><b>Assembler</b> au sol, en une seule poche.</li><li><b>Souffler</b> : la poche monte et se plaque aux murs.</li><li><b>Entrer</b> par un sas.</li><li><b>Démonter</b> : on coupe l’air, on plie, le film est recyclé.</li></ol></div>
+  <div><table class="t"><tr><th>poste</th><th>prix réel trouvé</th><th>pour le projet</th><th>source</th></tr>
+  <tr><td>Film polyéthylène M1, laize 6 m</td><td>300 € HT les 240 m²</td><td>23 rouleaux ≈ <b>6,9 k€</b></td><td>Tissus Scénique</td></tr>
+  <tr><td>Ventilateurs 1 500 W, 4 unités</td><td>145 € HT</td><td><b>≈ 0,6 k€</b></td><td>Destockplus</td></tr>
+  <tr><td>Ruban de jonction M1, 1 080 m de joints</td><td></td><td><b>sur devis</b></td><td></td></tr>
+  <tr><td>Relevé, assemblage, pose, sécurité incendie</td><td></td><td><b>sur devis</b></td><td></td></tr>
+  <tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 7,5 k€</b> + devis</td><td></td></tr></table>
+  <div class="note">Prix relevés le 10 nov 2026, pas des devis. Prix du film relevé sur un film noir, le blanc translucide reste à chiffrer. Cotes de la salle : Imago Mundi, à relever sur place. Méthode : celle de Penique Productions, un film de polyéthylène ignifugé tenu par l’air des ventilateurs.</div></div></div>
+  <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
+</section>
+
 <section class="slide" data-name="b10">
-<div class="top"><span>Palais Brongniart</span><span>Fiche technique</span></div><div class="label">Fiche technique et prix</div><h2 style="margin-bottom:28px">13 volumes · environ 1 500 m² de membrane</h2>
+<div class="top"><span>Palais Brongniart</span><span>Fiche technique</span></div><div class="label">Fiche technique et prix</div><h2 style="margin-bottom:28px">13 volumes · 2 100 m² de membrane</h2>
 <table class="t"><tr><th>poste</th><th>prix réel trouvé</th><th>pour le projet</th><th>source</th></tr>
-<tr><td>Toile PVC 600 g/m²</td><td>10 à 20 €/m²</td><td><b>≈ 15 à 30 k€</b></td><td>Hellopro</td></tr>
+<tr><td>Toile PVC 600 g/m², 3 300 m² en laize 1,50 m</td><td>10 à 20 €/m²</td><td><b>≈ 33 à 66 k€</b></td><td>Hellopro</td></tr>
 <tr><td>Souffleries 1 500 W, 13 unités</td><td>145 € HT</td><td><b>≈ 1,9 k€</b></td><td>Destockplus</td></tr>
 <tr><td>Nacelle, pas d’échafaudage</td><td>dès 200 €/jour</td><td>2 × 10 j ≈ <b>4 k€</b></td><td>Hellopro</td></tr>
 <tr><td>Confection, éclairage, structure lestée, étude vent, pose</td><td></td><td><b>sur devis</b></td><td></td></tr>
-<tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 21 à 36 k€</b> + devis</td><td></td></tr></table>
-<div class="note">Prix publics relevés le 9 nov 2026, pas des devis. Surface estimée d’après les cotes de l’élévation.</div>
+<tr class="sum"><td>Total chiffré</td><td></td><td><b>≈ 39 à 72 k€</b> + devis</td><td></td></tr></table>
+<div class="note">Prix publics relevés le 9 nov 2026, pas des devis. Surface calculée sur le patron : 13 volumes de 161 m², 156 lés coupés dans 3 300 m² de toile.</div>
 <div class="bot"><span>Présentation du projet</span><span class="pg"></span></div>
 </section>
 
